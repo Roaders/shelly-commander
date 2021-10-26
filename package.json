@@ -6,9 +6,10 @@
         "start": "ng serve --open",
         "build": "ng build",
         "watch": "ng build --watch --configuration development",
-        "test": "ng test",
+        "test": "karma start --singleRun --browsers ChromeHeadless",
         "lint": "eslint . --ext .ts,.d.ts,.js",
-        "lint:fix": "eslint . --ext .ts,.d.ts,.js --fix"
+        "lint:fix": "eslint . --ext .ts,.d.ts,.js --fix",
+        "test:watch": "karma start --no-coverage"
     },
     "private": true,
     "dependencies": {
@@ -20,7 +21,10 @@
         "@angular/platform-browser": "~12.2.0",
         "@angular/platform-browser-dynamic": "~12.2.0",
         "@angular/router": "~12.2.0",
+        "@morgan-stanley/needle": "^0.3.10",
         "@typescript-eslint/typescript-estree": "^5.2.0",
+        "bootstrap": "^5.1.3",
+        "reflect-metadata": "^0.1.13",
         "rxjs": "~6.6.0",
         "tslib": "^2.3.0",
         "zone.js": "~0.11.4"
@@ -29,7 +33,8 @@
         "@angular-devkit/build-angular": "~12.2.11",
         "@angular/cli": "~12.2.11",
         "@angular/compiler-cli": "~12.2.0",
-        "@types/jasmine": "~3.8.0",
+        "@morgan-stanley/ts-mocking-bird": "^0.4.2",
+        "@types/jasmine": "^3.8.2",
         "@types/node": "^12.11.1",
         "@typescript-eslint/eslint-plugin": "^5.2.0",
         "@typescript-eslint/parser": "^5.2.0",
@@ -40,13 +45,22 @@
         "eslint-plugin-node": "^11.1.0",
         "eslint-plugin-prettier": "^3.3.1",
         "eslint-plugin-promise": "^4.2.1",
+        "istanbul-instrumenter-loader": "^3.0.1",
+        "jasmine": "^3.10.0",
         "jasmine-core": "~3.8.0",
-        "karma": "~6.3.0",
-        "karma-chrome-launcher": "~3.1.0",
-        "karma-coverage": "~2.0.3",
-        "karma-jasmine": "~4.0.0",
-        "karma-jasmine-html-reporter": "~1.7.0",
+        "karma": "^6.3.6",
+        "karma-chrome-launcher": "^3.1.0",
+        "karma-coverage": "^2.0.3",
+        "karma-coverage-istanbul-reporter": "^3.0.3",
+        "karma-jasmine": "^4.0.1",
+        "karma-jasmine-html-reporter": "^1.7.0",
+        "karma-source-map-support": "^1.4.0",
+        "karma-sourcemap-loader": "^0.3.8",
+        "karma-webpack": "^5.0.0",
         "prettier": "^2.2.1",
-        "typescript": "~4.3.5"
+        "puppeteer": "^10.4.0",
+        "ts-loader": "^9.2.6",
+        "typescript": "~4.3.5",
+        "webpack": "^5.60.0"
     }
 }

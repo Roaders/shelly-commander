@@ -1,6 +1,17 @@
-export type Range = {
-    min: number;
-    max: number;
-};
+export type NumericRange =
+    | {
+          min: number;
+          max: number;
+      }
+    | {
+          min?: number;
+          max: number;
+      }
+    | {
+          min: number;
+          max?: number;
+      };
 
-export type IpRange = [Range, Range?, Range?, Range?];
+export type IpGroup = number | '*' | NumericRange;
+
+export type IpRange = [IpGroup, IpGroup, IpGroup, IpGroup];
