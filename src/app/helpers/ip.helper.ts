@@ -1,5 +1,5 @@
 import { Injectable } from '@morgan-stanley/needle';
-import { IpGroup, IpRange } from '../contracts';
+import { IpGroup, IpRange, NumericRange } from '../contracts';
 
 @Injectable()
 export class IpHelper {
@@ -22,7 +22,7 @@ export function expandRange(expander: number[][], existing?: number[][]): number
 
     existing = existing.reduce(
         (all, existingValue) => [...all, ...nextRange.map((newValue) => [...existingValue, newValue])],
-        new Array<number[]>()
+        new Array<number[]>(),
     );
 
     return expandRange(expander, existing);
@@ -45,4 +45,45 @@ export function getNumericValues(group: IpGroup): number[] {
     const length = requiredGroup.max - requiredGroup.min + 1;
 
     return Array.from({ length }).map((_, index) => index + requiredGroup.min);
+}
+
+const matchSingleIpRegExp = /^\d{1,3}$/;
+const matchRangeRegExp = /^\d{1,3}-\d{1,3}$/;
+
+export function isStringValueValid(stringValue: string): boolean {
+    if (stringValue === '*') {
+        return true;
+    }
+
+    return matchSingleIpRegExp.test(stringValue) || matchRangeRegExp.test(stringValue);
+}
+
+export function convertToIpGroup(stringValue: string): IpGroup | undefined {
+    if (stringValue === '*') {
+        return '*';
+    }
+
+    if (matchSingleIpRegExp.test(stringValue)) {
+        return parseInt(stringValue);
+    }
+
+    if (matchRangeRegExp.test(stringValue)) {
+        const values = stringValue.split('-');
+        return { min: parseInt(values[0]), max: parseInt(values[1]) };
+    }
+
+    return undefined;
+}
+
+export function isIpGroup(value: unknown): value is IpGroup {
+    return (
+        value === '*' ||
+        typeof value === 'number' ||
+        (typeof value === 'object' &&
+            (typeof (value as NumericRange).min === 'number' || typeof (value as NumericRange).max === 'number'))
+    );
+}
+
+export function isIpRange(value: unknown): value is IpRange {
+    return Array.isArray(value) && value.every(isIpGroup) && value.length === 4;
 }

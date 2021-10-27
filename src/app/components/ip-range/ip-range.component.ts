@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { convertToIpGroup, isStringValueValid, IpHelper, isIpRange } from '../../helpers';
 
 const allowedInput = /[*0-9-]/;
 
@@ -8,13 +9,24 @@ const allowedInput = /[*0-9-]/;
     styleUrls: ['./ip-range.component.scss'],
 })
 export class IpRangeComponent {
-    public groupOne = '1';
-    public groupTwo = '2';
-    public groupThree = '3';
-    public groupFour = '4';
+    public groupOne = '';
+    public groupTwo = '';
+    public groupThree = '';
+    public groupFour = '';
+
+    constructor(private ipHelper: IpHelper) {}
 
     public get isFormValid(): boolean {
-        return true;
+        return this.getValues().every(isStringValueValid);
+    }
+
+    public get buttonText(): string {
+        const ipGroups = this.getValues().map(convertToIpGroup);
+        if (isIpRange(ipGroups)) {
+            const addresses = this.ipHelper.getIpAddresses(ipGroups);
+            return `Scan ${addresses.length} IP Addresses`;
+        }
+        return 'Scan';
     }
 
     public scanIp(): void {
@@ -48,8 +60,12 @@ export class IpRangeComponent {
 
         const maxLength = value.indexOf('-') >= 0 || event.key === '-' ? 7 : 3;
 
-        if (value.length >= maxLength) {
+        if (value.length >= maxLength && target.selectionStart === target.selectionEnd) {
             return event.preventDefault();
         }
+    }
+
+    private getValues(): [string, string, string, string] {
+        return [this.groupOne, this.groupTwo, this.groupThree, this.groupFour];
     }
 }

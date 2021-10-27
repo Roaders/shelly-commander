@@ -1,9 +1,10 @@
 import { Mock, setupFunction, setupProperty } from '@morgan-stanley/ts-mocking-bird';
+import { IpHelper } from '../../helpers';
 import { IpRangeComponent } from './ip-range.component';
 
 describe(` (ip-range.component)`, () => {
     function createInstance() {
-        return new IpRangeComponent();
+        return new IpRangeComponent(Mock.create<IpHelper>().mock);
     }
 
     it(`should create`, () => {
@@ -24,8 +25,10 @@ describe(` (ip-range.component)`, () => {
             { key: 'a', preventDefault: true },
             { key: '3', value: '12', preventDefault: false },
             { key: '1', value: '123', preventDefault: true },
+            { key: '1', value: '123', preventDefault: false, selectionStart: 1, selectionEnd: 2 },
             { key: '6', value: '123-45', preventDefault: false },
             { key: '1', value: '123-456', preventDefault: true },
+            { key: '1', value: '123-456', preventDefault: false, selectionStart: 1, selectionEnd: 2 },
             { key: '-', value: '123', preventDefault: false },
             { key: '-', value: '123-', preventDefault: true },
             { key: '*', value: '1', preventDefault: true },
