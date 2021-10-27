@@ -1,21 +1,19 @@
-
-
-
 <div>
 
     <h2>IP Range</h2>
 
-    <div class="m-auto">
-        content
+    <div>
+        <input type="text" [(ngModel)]="groupOne" (keypress)="validateInput($event)" [ngClass]="inputClass(groupOne)">
+        <span>.</span>
+        <input type="text" [(ngModel)]="groupTwo" (keypress)="validateInput($event)" [ngClass]="inputClass(groupTwo)"/>
+        <span>.</span>
+        <input type="text" [(ngModel)]="groupThree" (keypress)="validateInput($event)" [ngClass]="inputClass(groupThree)"/>
+        <span>.</span>
+        <input type="text" [(ngModel)]="groupFour" (keypress)="validateInput($event)" [ngClass]="inputClass(groupFour)"/>
     </div>
-    <div class="d-inline">
-        <input class="range-input" />
-        <span>.</span>
-        <input class="range-input" />
-        <span>.</span>
-        <input class="range-input" />
-        <span>.</span>
-        <input class="range-input" />
+
+    <div class="mt-2">
+        <button class="btn btn-primary" type="button" [disabled]="!isFormValid" (click)="scanIp()">Scan</button>
     </div>
 
 </div>

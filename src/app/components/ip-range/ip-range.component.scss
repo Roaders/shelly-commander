@@ -1,4 +1,12 @@
 
-.range-input {
+.range-input-narrow, .range-input-wide {
+    text-align: center;
+}
+
+.range-input-narrow {
     width: 3rem;
+}
+
+.range-input-wide {
+    width: 5rem;
 }

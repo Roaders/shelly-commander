@@ -19,7 +19,11 @@ module.exports = {
     plugins: ['@typescript-eslint'],
     ignorePatterns: ['dist/'],
     rules: {
-        'prettier/prettier': ['error', { endOfLine: 'auto', tabWidth: 4, singleQuote: true, printWidth: 120 }],
+        'prettier/prettier': [
+            'error',
+            { endOfLine: 'auto', tabWidth: 4, singleQuote: true, printWidth: 120, trailingComma: 'all' },
+        ],
+        '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
     overrides: [
         {
