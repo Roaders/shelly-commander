@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
+import { IpRange } from '../../contracts';
 import { convertToIpGroup, isStringValueValid, IpHelper, isIpRange } from '../../helpers';
 
 const allowedInput = /[*0-9-]/;
+const ipRangeStorageKey = 'SAVED_IP_RANGE';
 
 @Component({
     selector: 'ip-range',
@@ -9,28 +11,36 @@ const allowedInput = /[*0-9-]/;
     styleUrls: ['./ip-range.component.scss'],
 })
 export class IpRangeComponent {
-    public groupOne = '';
-    public groupTwo = '';
-    public groupThree = '';
-    public groupFour = '';
+    public groupOne = '192';
+    public groupTwo = '168';
+    public groupThree = '0';
+    public groupFour = '*';
 
-    constructor(private ipHelper: IpHelper) {}
+    constructor(private ipHelper: IpHelper) {
+        this.loadRange();
+    }
 
     public get isFormValid(): boolean {
         return this.getValues().every(isStringValueValid);
     }
 
     public get buttonText(): string {
-        const ipGroups = this.getValues().map(convertToIpGroup);
-        if (isIpRange(ipGroups)) {
-            const addresses = this.ipHelper.getIpAddresses(ipGroups);
+        const range = this.getIpRange();
+        if (range != null) {
+            const addresses = this.ipHelper.getIpAddresses(range);
             return `Scan ${addresses.length} IP Addresses`;
         }
         return 'Scan';
     }
 
     public scanIp(): void {
-        console.log(`Scan`, this);
+        const range = undefined;
+
+        if (range == null) {
+            console.error(`Cannot perform scan as range is not valid`);
+        }
+
+        this.saveRange();
     }
 
     public inputClass(value: string): string {
@@ -65,7 +75,32 @@ export class IpRangeComponent {
         }
     }
 
+    private getIpRange(): IpRange | undefined {
+        const ipGroups = this.getValues().map(convertToIpGroup);
+
+        return isIpRange(ipGroups) ? ipGroups : undefined;
+    }
+
     private getValues(): [string, string, string, string] {
         return [this.groupOne, this.groupTwo, this.groupThree, this.groupFour];
+    }
+
+    private saveRange() {
+        window.localStorage.setItem(ipRangeStorageKey, JSON.stringify(this.getValues()));
+    }
+
+    private loadRange() {
+        const rangeString = window.localStorage.getItem(ipRangeStorageKey);
+
+        if (rangeString == null) {
+            return;
+        }
+
+        const [groupOne, groupTwo, groupThree, groupFour] = JSON.parse(rangeString);
+
+        this.groupOne = groupOne;
+        this.groupTwo = groupTwo;
+        this.groupThree = groupThree;
+        this.groupFour = groupFour;
     }
 }
