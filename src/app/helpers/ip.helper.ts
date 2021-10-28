@@ -1,5 +1,20 @@
 import { IpGroup, IpRange, NumericRange } from '../contracts';
 
+export function compareAddressesWithKnownList(knownDevices: string[]): (one: string, two: string) => number {
+    return (one: string, two: string) => {
+        const oneKnown = knownDevices.indexOf(one);
+        const twoKnown = knownDevices.indexOf(two);
+        if (oneKnown && !twoKnown) {
+            return 1;
+        }
+        if (!oneKnown && twoKnown) {
+            return -1;
+        }
+
+        return compareAddresses(one, two);
+    };
+}
+
 export function compareAddresses(one: string, two: string): number {
     return parseInt(one.split('.').join('')) - parseInt(two.split('.').join(''));
 }

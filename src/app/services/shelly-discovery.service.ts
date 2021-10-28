@@ -10,7 +10,8 @@ import {
     ShellySettings,
 } from '../contracts';
 import axios from 'axios';
-import { getIpAddresses } from '../helpers';
+import { compareAddressesWithKnownList, getIpAddresses } from '../helpers';
+import { discoveredDevicesStorageKey } from '../constants';
 
 @Injectable()
 export class ShellyDiscoveryService {
@@ -54,7 +55,8 @@ export class ShellyDiscoveryService {
     }
 
     public scan(range: IpRange): void {
-        const addresses = getIpAddresses(range);
+        const knownDevices: string[] = JSON.parse(window.localStorage.getItem(discoveredDevicesStorageKey) || '[]');
+        const addresses = getIpAddresses(range).sort(compareAddressesWithKnownList(knownDevices));
 
         if (this.subscription != null) {
             this.subscription.unsubscribe();
@@ -70,10 +72,11 @@ export class ShellyDiscoveryService {
             .subscribe(
                 (next) => this.resultsSubject.next(next),
                 (error) => this.resultsSubject.error(error),
-                () =>
+                () => {
                     this.resultsSubject.next({
                         type: 'streamComplete',
-                    }),
+                    });
+                },
             );
     }
 }

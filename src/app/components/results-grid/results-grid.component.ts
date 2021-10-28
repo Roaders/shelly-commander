@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ColDef, GridOptions } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
+import { discoveredDevicesStorageKey } from '../../constants';
 import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
 import { compareAddresses, formatMac } from '../../helpers';
 import { ShellyDiscoveryService } from '../../services';
@@ -128,6 +129,10 @@ export class ResultsGridComponent {
 
             case 'streamComplete':
                 this._progress = undefined;
+                window.localStorage.setItem(
+                    discoveredDevicesStorageKey,
+                    JSON.stringify(Object.keys(this._shellyLookup || [])),
+                );
                 break;
 
             case 'result':
