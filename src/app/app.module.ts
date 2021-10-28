@@ -4,10 +4,13 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './components/app/app.component';
 import { IpRangeComponent } from './components/ip-range/ip-range.component';
 import { ResultsGridComponent } from './components/results-grid/results-grid.component';
+import { AgGridModule } from 'ag-grid-angular';
+import { AddressCellRenderer } from './components/cell-renderers/address/address.cell-renderer';
+import { EnableCorsCellRenderer } from './components/cell-renderers/enable-cors/enable-cors.cell-renderer';
 
 @NgModule({
-    declarations: [AppComponent, IpRangeComponent, ResultsGridComponent],
-    imports: [BrowserModule, FormsModule],
+    declarations: [AppComponent, IpRangeComponent, ResultsGridComponent, AddressCellRenderer, EnableCorsCellRenderer],
+    imports: [BrowserModule, FormsModule, AgGridModule.withComponents([AddressCellRenderer, EnableCorsCellRenderer])],
     providers: [],
     bootstrap: [AppComponent],
 })

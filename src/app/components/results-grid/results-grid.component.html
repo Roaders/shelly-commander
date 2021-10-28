@@ -7,25 +7,21 @@
     <div *ngIf="shellies != null">
         <h3>Discovered Shellies</h3>
 
-        <div>
-            <div class="mt-1" *ngFor="let shelly of shellies">
-                <div class="me-2 d-inline"><a href="http://{{shelly.address}}" target="_blank">{{shelly.address}}</a> {{shelly.settings.device.hostname}}</div>
-            </div>
-        </div>
+        <ag-grid-angular class="ag-theme-alpine w-100" [rowData]="shellies" [gridOptions]="discoveredGridOptions">
+        </ag-grid-angular>
     </div>
 
     <div *ngIf="possibleShellies != null">
         <h3>Possible Shellies</h3>
-        
-        <div>These IP addresses returned a network error. It is possible that they are shelly devices with cross origin resource sharing turned off.</div>
-        <div>'Enable CORS' will attempt to turn 'Allow Cross-Origin Resource Sharing' on. If the device is a shelly this will allow the details to be loaded into the grid above.</div>
 
-        <div>
-            <div class="mt-1" *ngFor="let possible of possibleShellies">
-                <div class="me-2 d-inline"><a href="http://{{possible}}" target="_blank">{{possible}}</a></div>
-                <button type="button" class="btn btn-secondary btn-sm" (click)="enableCors(possible)">Enable CORS</button>
-            </div>
-        </div>
+        <div>These IP addresses returned a network error. It is possible that they are shelly devices with cross origin
+            resource sharing turned off.</div>
+        <div>'Enable CORS' will attempt to turn 'Allow Cross-Origin Resource Sharing' on. If the device is a shelly this
+            will allow the details to be loaded into the grid above.</div>
+
+        <ag-grid-angular class="ag-theme-alpine w-100" [rowData]="possibleShellies" [gridOptions]="possibleGridOptions">
+        </ag-grid-angular>
+
     </div>
 
 </div>

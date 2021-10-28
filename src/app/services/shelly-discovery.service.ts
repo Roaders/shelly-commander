@@ -10,7 +10,7 @@ import {
     ShellySettings,
 } from '../contracts';
 import { IpHelper } from '../helpers';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 
 @Injectable()
 export class ShellyDiscoveryService {

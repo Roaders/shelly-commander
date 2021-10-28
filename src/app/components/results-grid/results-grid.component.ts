@@ -1,8 +1,16 @@
 import { Component } from '@angular/core';
+import { ColDef, GridOptions } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
 import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
 import { ShellyDiscoveryService } from '../../services';
+import { AddressCellRenderer } from '../cell-renderers/address/address.cell-renderer';
+import { EnableCorsCellRenderer } from '../cell-renderers/enable-cors/enable-cors.cell-renderer';
+
+const defaultColDef: ColDef = {
+    sortable: true,
+    filter: true,
+};
 
 @Component({
     selector: 'results-grid',
@@ -10,16 +18,51 @@ import { ShellyDiscoveryService } from '../../services';
     styleUrls: ['./results-grid.component.scss'],
 })
 export class ResultsGridComponent {
+    public discoveredGridOptions: GridOptions = {
+        columnDefs: [
+            {
+                headerName: 'Address',
+                valueGetter: (row): string => row.data.address,
+                cellRendererFramework: AddressCellRenderer,
+            },
+            { headerName: 'Host Name', valueGetter: (row): string => row.data.settings.device.hostname },
+            { headerName: 'Name', valueGetter: (row): string => row.data.settings.name },
+            { headerName: 'Type', valueGetter: (row): string => row.data.settings.device.type },
+            { headerName: 'Mac', valueGetter: (row): string => row.data.settings.device.mac },
+        ],
+        domLayout: 'autoHeight',
+        defaultColDef,
+    };
+
+    public possibleGridOptions: GridOptions = {
+        columnDefs: [
+            {
+                headerName: 'Address',
+                valueGetter: (row): string => row.data,
+                cellRendererFramework: AddressCellRenderer,
+            },
+            {
+                valueGetter: (row): string => row.data,
+                cellRendererFramework: EnableCorsCellRenderer,
+                cellRendererParams: { owner: this },
+            },
+        ],
+        domLayout: 'autoHeight',
+        defaultColDef,
+    };
+
     private _possibleShellyLookup: Record<string, ShellyDiscoveryError> | undefined = {};
+    private _possibleShellyArray: string[] | undefined;
 
     public get possibleShellies(): string[] | undefined {
-        return this._possibleShellyLookup == null ? undefined : Object.keys(this._possibleShellyLookup);
+        return this._possibleShellyArray;
     }
 
     private _shellyLookup: Record<string, ShellyDiscoveryResult> | undefined = {};
+    private _shellies: ShellyDiscoveryResult[] | undefined;
 
     public get shellies(): ShellyDiscoveryResult[] | undefined {
-        return this._shellyLookup == null ? undefined : Object.values(this._shellyLookup);
+        return this._shellies;
     }
 
     private _progress: IProgress | undefined;
@@ -53,6 +96,8 @@ export class ResultsGridComponent {
             if (this._shellyLookup != null) {
                 delete this._shellyLookup[address];
             }
+
+            this.updateDataProviders();
 
             interval(500)
                 .pipe(
@@ -93,12 +138,18 @@ export class ResultsGridComponent {
                 break;
         }
 
-        console.log(`handleStreamResult`, message);
+        this.updateDataProviders();
     }
 
     private incrementProgress(): void {
         this._progress =
             this._progress != null ? { count: this._progress.count + 1, total: this._progress.total } : undefined;
+    }
+
+    private updateDataProviders() {
+        this._possibleShellyArray =
+            this._possibleShellyLookup == null ? undefined : Object.keys(this._possibleShellyLookup);
+        this._shellies = this._shellyLookup == null ? undefined : Object.values(this._shellyLookup);
     }
 }
 
