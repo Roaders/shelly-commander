@@ -18,7 +18,7 @@
             resource sharing turned off.</div>
         <div>'Enable CORS' will attempt to turn 'Allow Cross-Origin Resource Sharing' on. If the device is a shelly this
             will allow the details to be loaded into the grid above.</div>
-        <div>If no shellies are detected you may need to disable the chrome flag <a href="chrome://flags/#block-insecure-private-network-requests" target="_blank">Block insecure private network requests</a>. This is required as public sites are not typically able to access private IP addresses.</div>
+        <div>If no shellies are detected you may need to disable the chrome flag "Block insecure private network requests" (chrome://flags/#block-insecure-private-network-requests). This is required as public sites are not typically able to access private IP addresses.</div>
 
         <ag-grid-angular class="ag-theme-alpine w-100" [rowData]="possibleShellies" [gridOptions]="possibleGridOptions">
         </ag-grid-angular>
