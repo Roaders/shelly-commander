@@ -18,7 +18,7 @@ jobs:
       with:
         type: 'zip'
         filename: 'release.zip'
-        path: 'dist'
+        path: 'dist/shelly-commander'
     - name: Upload Release
       uses: ncipollo/release-action@v1
       with:
