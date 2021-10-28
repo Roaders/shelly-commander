@@ -4,14 +4,14 @@
 
     <div *ngIf="progress != null">Scanned {{progress?.count}} of {{progress?.total}} addresses...</div>
 
-    <div *ngIf="shellies != null">
+    <div *ngIf="shellies != null" class="pt-2">
         <h3>Discovered Shellies</h3>
 
         <ag-grid-angular class="ag-theme-alpine w-100" [rowData]="shellies" [gridOptions]="discoveredGridOptions">
         </ag-grid-angular>
     </div>
 
-    <div *ngIf="possibleShellies != null">
+    <div *ngIf="possibleShellies != null" class="pt-2">
         <h3>Possible Shellies</h3>
 
         <div>These IP addresses returned a network error. It is possible that they are shelly devices with cross origin

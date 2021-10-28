@@ -21,7 +21,6 @@ export class EnableCorsCellRenderer {
     }
 
     public agInit(params: ICellRendererParams): void {
-        console.log(`agInit`, params);
         this.saveValues(params);
     }
 

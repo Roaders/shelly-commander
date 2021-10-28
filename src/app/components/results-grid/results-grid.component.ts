@@ -3,6 +3,7 @@ import { ColDef, GridOptions } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
 import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
+import { compareAddresses, formatMac } from '../../helpers';
 import { ShellyDiscoveryService } from '../../services';
 import { AddressCellRenderer } from '../cell-renderers/address/address.cell-renderer';
 import { EnableCorsCellRenderer } from '../cell-renderers/enable-cors/enable-cors.cell-renderer';
@@ -24,11 +25,16 @@ export class ResultsGridComponent {
                 headerName: 'Address',
                 valueGetter: (row): string => row.data.address,
                 cellRendererFramework: AddressCellRenderer,
+                comparator: compareAddresses,
             },
             { headerName: 'Host Name', valueGetter: (row): string => row.data.settings.device.hostname },
             { headerName: 'Name', valueGetter: (row): string => row.data.settings.name },
             { headerName: 'Type', valueGetter: (row): string => row.data.settings.device.type },
-            { headerName: 'Mac', valueGetter: (row): string => row.data.settings.device.mac },
+            {
+                headerName: 'Mac',
+                valueGetter: (row): string => row.data.settings.device.mac,
+                valueFormatter: (params): string => formatMac(params.value),
+            },
         ],
         domLayout: 'autoHeight',
         defaultColDef,
@@ -40,11 +46,14 @@ export class ResultsGridComponent {
                 headerName: 'Address',
                 valueGetter: (row): string => row.data,
                 cellRendererFramework: AddressCellRenderer,
+                comparator: compareAddresses,
             },
             {
                 valueGetter: (row): string => row.data,
                 cellRendererFramework: EnableCorsCellRenderer,
                 cellRendererParams: { owner: this },
+                sortable: false,
+                filter: false,
             },
         ],
         domLayout: 'autoHeight',
@@ -82,7 +91,6 @@ export class ResultsGridComponent {
     }
 
     public enableCors(address: string): void {
-        console.log(`enableCors`, { address });
         const corsWindow = window.open(
             `http://${address}/settings?allow_cross_origin=true`,
             '_blank',
@@ -126,7 +134,6 @@ export class ResultsGridComponent {
                 this.incrementProgress();
                 this._shellyLookup = this._shellyLookup ?? {};
                 this._shellyLookup[message.address] = message;
-                console.log(`result`, message);
                 break;
 
             case 'error':

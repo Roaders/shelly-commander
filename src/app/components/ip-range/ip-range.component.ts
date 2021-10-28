@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
+import { ipRangeStorageKey } from '../../constants';
 import { IpRange } from '../../contracts';
-import { convertToIpGroup, isStringValueValid, IpHelper, isIpRange } from '../../helpers';
+import { convertToIpGroup, isStringValueValid, isIpRange, getIpAddresses } from '../../helpers';
 import { ShellyDiscoveryService } from '../../services';
 
 const allowedInput = /[*0-9-]/;
-const ipRangeStorageKey = 'SAVED_IP_RANGE';
 
 @Component({
     selector: 'ip-range',
@@ -17,7 +17,7 @@ export class IpRangeComponent {
     public groupThree = '0';
     public groupFour = '*';
 
-    constructor(private ipHelper: IpHelper, private discoveryService: ShellyDiscoveryService) {
+    constructor(private discoveryService: ShellyDiscoveryService) {
         this.loadRange();
     }
 
@@ -28,7 +28,7 @@ export class IpRangeComponent {
     public get buttonText(): string {
         const range = this.getIpRange();
         if (range != null) {
-            const addresses = this.ipHelper.getIpAddresses(range);
+            const addresses = getIpAddresses(range);
             return `Scan ${addresses.length} IP Addresses`;
         }
         return 'Scan';

@@ -9,13 +9,11 @@ import {
     ShellyInfo,
     ShellySettings,
 } from '../contracts';
-import { IpHelper } from '../helpers';
 import axios from 'axios';
+import { getIpAddresses } from '../helpers';
 
 @Injectable()
 export class ShellyDiscoveryService {
-    constructor(private helper: IpHelper) {}
-
     private subscription: Subscription | undefined;
 
     private readonly resultsSubject = new Subject<DiscoveryMessages>();
@@ -56,7 +54,7 @@ export class ShellyDiscoveryService {
     }
 
     public scan(range: IpRange): void {
-        const addresses = this.helper.getIpAddresses(range);
+        const addresses = getIpAddresses(range);
 
         if (this.subscription != null) {
             this.subscription.unsubscribe();

@@ -1,11 +1,29 @@
-import { Injectable } from '@morgan-stanley/needle';
 import { IpGroup, IpRange, NumericRange } from '../contracts';
 
-@Injectable()
-export class IpHelper {
-    public getIpAddresses(range: IpRange): string[] {
-        return expandRange(range.map(getNumericValues)).map((address) => address.join('.'));
-    }
+export function compareAddresses(one: string, two: string): number {
+    return parseInt(one.split('.').join('')) - parseInt(two.split('.').join(''));
+}
+
+export function getIpAddresses(range: IpRange): string[] {
+    return expandRange(range.map(getNumericValues)).map((address) => address.join('.'));
+}
+
+export function formatMac(value: string): string {
+    return Array.from(value)
+        .reduce((groups, character) => {
+            let lastGroup = groups[groups.length - 1];
+
+            if (lastGroup == null || lastGroup.length >= 2) {
+                lastGroup = [character];
+                groups.push(lastGroup);
+            } else {
+                lastGroup.push(character);
+            }
+
+            return groups;
+        }, new Array<string[]>())
+        .map((group) => group.join(''))
+        .join(':');
 }
 
 export function expandRange(expander: number[][], existing?: number[][]): number[][] {

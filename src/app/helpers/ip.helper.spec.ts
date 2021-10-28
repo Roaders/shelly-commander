@@ -1,15 +1,7 @@
 import { IpGroup, IpRange } from '../contracts';
-import { expandRange, getNumericValues, IpHelper } from './ip.helper';
+import { expandRange, formatMac, getIpAddresses, getNumericValues } from './ip.helper';
 
-describe(`${IpHelper.name} (ip.helper)`, () => {
-    function createInstance() {
-        return new IpHelper();
-    }
-
-    it('should create', () => {
-        expect(createInstance()).toBeDefined();
-    });
-
+describe(`ip.helper`, () => {
     describe(`getIpAddresses`, () => {
         const tests: { range: IpRange; expected: string[]; expectedCount?: number }[] = [
             { range: [192, 168, 0, '*'], expectedCount: 256, expected: ['192.168.0.0', '192.168.0.255'] },
@@ -27,9 +19,7 @@ describe(`${IpHelper.name} (ip.helper)`, () => {
             const expectedMessage = expectedCount == null ? `[${expected}]` : `${expectedCount} addresses`;
 
             it(`should return ${expectedMessage} when passed ${JSON.stringify(range)}`, () => {
-                const instance = createInstance();
-
-                const result = instance.getIpAddresses(range);
+                const result = getIpAddresses(range);
 
                 if (expectedCount != null) {
                     expect(result.length).toBe(expectedCount);
@@ -108,6 +98,12 @@ describe(`${IpHelper.name} (ip.helper)`, () => {
 
                 expect(result).toEqual(expected);
             });
+        });
+    });
+
+    describe(`formatMac`, () => {
+        it(`should format a string and place : to split the groups`, () => {
+            expect(formatMac(`12AB34CD`)).toBe(`12:AB:34:CD`);
         });
     });
 });
