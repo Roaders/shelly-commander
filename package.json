@@ -1,7 +1,7 @@
 {
     "name": "shelly-commander",
     "description": "An app to find shelly devices within a specified IP range",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "scripts": {
         "clean": "rimraf dist coverage",
         "start": "ng serve --open",
