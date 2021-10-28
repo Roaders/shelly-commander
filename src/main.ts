@@ -4,6 +4,9 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { getRegisteredTypesWithFactories } from '@morgan-stanley/needle';
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
+import packageJson from '../package.json';
+
+window.document.title = `Shelly Commander ${packageJson.version}`;
 
 if (environment.production) {
     enableProdMode();
