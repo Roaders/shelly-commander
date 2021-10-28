@@ -3,10 +3,13 @@
     "description": "An app to find shelly devices within a specified IP range",
     "version": "0.0.0",
     "scripts": {
+        "clean": "rimraf dist coverage",
         "start": "ng serve --open",
         "build": "ng build",
         "watch": "ng build --watch --configuration development",
         "test": "karma start --singleRun --browsers ChromeHeadless",
+        "prebuild-release": "npm run clean",
+        "build-release": "npm run test && npm run lint && npm run build",
         "lint": "eslint . --ext .ts,.d.ts,.js",
         "lint:fix": "eslint . --ext .ts,.d.ts,.js --fix",
         "test:watch": "karma start --no-coverage"
@@ -63,6 +66,7 @@
         "karma-webpack": "^5.0.0",
         "prettier": "^2.2.1",
         "puppeteer": "^10.4.0",
+        "rimraf": "^3.0.2",
         "ts-loader": "^9.2.6",
         "typescript": "~4.3.5",
         "webpack": "^5.60.0"
