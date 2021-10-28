@@ -1,0 +1,29 @@
+<div *ngIf="scanStarted" class="pt-2">
+
+    <h2>Results</h2>
+
+    <div *ngIf="progress != null">Scanned {{progress?.count}} of {{progress?.total}} addresses...</div>
+
+    <div *ngIf="shellies != null">
+        <h2>Discovered Shellies</h2>
+
+        <div>
+            <div class="mt-1" *ngFor="let shelly of shellies">
+                <div class="me-2 d-inline"><a href="http://{{shelly.address}}" target="_blank">{{shelly.address}}</a> {{shelly.settings.device.hostname}}</div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="possibleShellies != null">
+        <h2>Possible Shellies</h2>
+        <div>These IP addresses returned a network error. It is possible that they are shelly devices with cross origin resource sharing turned off.</div>
+
+        <div>
+            <div class="mt-1" *ngFor="let possible of possibleShellies">
+                <div class="me-2 d-inline"><a href="http://{{possible}}" target="_blank">{{possible}}</a></div>
+                <button type="button" class="btn btn-secondary btn-sm" (click)="enableCors(possible)">Enable CORS</button>
+            </div>
+        </div>
+    </div>
+
+</div>

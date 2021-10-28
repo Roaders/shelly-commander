@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { IpRange } from '../../contracts';
 import { convertToIpGroup, isStringValueValid, IpHelper, isIpRange } from '../../helpers';
+import { ShellyDiscoveryService } from '../../services';
 
 const allowedInput = /[*0-9-]/;
 const ipRangeStorageKey = 'SAVED_IP_RANGE';
@@ -16,7 +17,7 @@ export class IpRangeComponent {
     public groupThree = '0';
     public groupFour = '*';
 
-    constructor(private ipHelper: IpHelper) {
+    constructor(private ipHelper: IpHelper, private discoveryService: ShellyDiscoveryService) {
         this.loadRange();
     }
 
@@ -34,13 +35,15 @@ export class IpRangeComponent {
     }
 
     public scanIp(): void {
-        const range = undefined;
+        const range = this.getIpRange();
 
         if (range == null) {
             console.error(`Cannot perform scan as range is not valid`);
+            return;
         }
 
         this.saveRange();
+        this.discoveryService.scan(range);
     }
 
     public inputClass(value: string): string {
