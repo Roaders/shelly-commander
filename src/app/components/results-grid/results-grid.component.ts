@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { ColDef, GridOptions, RowSelectedEvent } from 'ag-grid-community';
+import { ColDef, GridApi, GridOptions, RowSelectedEvent } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
 import { discoveredDevicesStorageKey } from '../../constants';
@@ -20,6 +20,8 @@ const defaultColDef: ColDef = {
     styleUrls: ['./results-grid.component.scss'],
 })
 export class ResultsGridComponent {
+    private _gridApi: GridApi | undefined;
+
     @Output()
     public readonly onDeviceSelected = new EventEmitter<ShellySettings | undefined>();
 
@@ -49,7 +51,8 @@ export class ResultsGridComponent {
         domLayout: 'autoHeight',
         defaultColDef,
         rowSelection: 'single',
-        onRowSelected: (event) => this.onRowSelected(event),
+        onRowSelected: () => this.onRowSelected(),
+        onGridReady: (event) => (this._gridApi = event.api),
     };
 
     public possibleGridOptions: GridOptions = {
@@ -129,9 +132,10 @@ export class ResultsGridComponent {
         }
     }
 
-    private onRowSelected(event: RowSelectedEvent): void {
-        this._selectedDevice = event.data?.settings;
-        this.onDeviceSelected.emit(this._selectedDevice);
+    private onRowSelected(): void {
+        const discoveryResult: ShellyDiscoveryResult | undefined = this._gridApi?.getSelectedRows()[0];
+        this._selectedDevice = discoveryResult?.settings;
+        this.onDeviceSelected.emit(discoveryResult?.settings);
     }
 
     private handleStreamResult(message: DiscoveryMessages) {
