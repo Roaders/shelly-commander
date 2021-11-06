@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
-import { ColDef, GridOptions } from 'ag-grid-community';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { ColDef, GridOptions, RowSelectedEvent } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
 import { discoveredDevicesStorageKey } from '../../constants';
-import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
+import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult, ShellySettings } from '../../contracts';
 import { compareAddresses, formatMac } from '../../helpers';
 import { ShellyDiscoveryService } from '../../services';
 import { AddressCellRenderer } from '../cell-renderers/address/address.cell-renderer';
@@ -20,6 +20,15 @@ const defaultColDef: ColDef = {
     styleUrls: ['./results-grid.component.scss'],
 })
 export class ResultsGridComponent {
+    @Output()
+    public readonly onDeviceSelected = new EventEmitter<ShellySettings | undefined>();
+
+    private _selectedDevice: ShellySettings | undefined;
+
+    public get selectedDevice(): ShellySettings | undefined {
+        return this._selectedDevice;
+    }
+
     public discoveredGridOptions: GridOptions = {
         columnDefs: [
             {
@@ -39,6 +48,8 @@ export class ResultsGridComponent {
         ],
         domLayout: 'autoHeight',
         defaultColDef,
+        rowSelection: 'single',
+        onRowSelected: (event) => this.onRowSelected(event),
     };
 
     public possibleGridOptions: GridOptions = {
@@ -116,6 +127,11 @@ export class ResultsGridComponent {
                 )
                 .subscribe((message) => this.handleStreamResult(message));
         }
+    }
+
+    private onRowSelected(event: RowSelectedEvent): void {
+        this._selectedDevice = event.data?.settings;
+        this.onDeviceSelected.emit(this._selectedDevice);
     }
 
     private handleStreamResult(message: DiscoveryMessages) {
