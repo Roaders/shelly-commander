@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ipRangeStorageKey } from '../../constants';
 import { IpRange } from '../../contracts';
 import { convertToIpGroup, isStringValueValid, isIpRange, getIpAddresses } from '../../helpers';
-import { ShellyDiscoveryService } from '../../services';
+import { ShellyService } from '../../services';
 
 const allowedInput = /[*0-9-]/;
 
@@ -17,7 +17,7 @@ export class IpRangeComponent {
     public groupThree = '0';
     public groupFour = '*';
 
-    constructor(private discoveryService: ShellyDiscoveryService) {
+    constructor(private shellyService: ShellyService) {
         this.loadRange();
     }
 
@@ -43,7 +43,7 @@ export class IpRangeComponent {
         }
 
         this.saveRange();
-        this.discoveryService.scan(range);
+        this.shellyService.scan(range);
     }
 
     public inputClass(value: string): string {

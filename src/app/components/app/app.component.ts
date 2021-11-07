@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ShellySettings } from '../../contracts';
+import { ShellyDiscoveryResult } from '../../contracts';
 
 @Component({
     selector: 'app-root',
@@ -7,5 +7,5 @@ import { ShellySettings } from '../../contracts';
     styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-    public selectedDevice: ShellySettings | undefined;
+    public selectedDevice: ShellyDiscoveryResult | undefined;
 }

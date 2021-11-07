@@ -25,6 +25,18 @@ export type StreamComplete = {
     type: 'streamComplete';
 };
 
+export type ShellyAction = {
+    index: number;
+    enabled: boolean;
+    urls: string[];
+};
+
+export type ShellyActionRecord = Record<string, ShellyAction>;
+
+export type ShellyActionsResult = {
+    actions: ShellyActionRecord;
+};
+
 export type ShellyDiscoveryResult = {
     type: 'result';
     address: string;

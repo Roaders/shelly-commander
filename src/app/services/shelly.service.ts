@@ -4,6 +4,8 @@ import { catchError, map, mergeMap } from 'rxjs/operators';
 import {
     DiscoveryMessages,
     IpRange,
+    ShellyActionRecord,
+    ShellyActionsResult,
     ShellyDiscoveryError,
     ShellyDiscoveryResult,
     ShellyInfo,
@@ -14,12 +16,12 @@ import { compareAddressesWithKnownList, getIpAddresses } from '../helpers';
 import { discoveredDevicesStorageKey } from '../constants';
 
 @Injectable()
-export class ShellyDiscoveryService {
+export class ShellyService {
     private subscription: Subscription | undefined;
 
     private readonly resultsSubject = new Subject<DiscoveryMessages>();
 
-    public get resultsStream(): Observable<DiscoveryMessages> {
+    public get discoveryStream(): Observable<DiscoveryMessages> {
         return this.resultsSubject.asObservable();
     }
 
@@ -51,6 +53,12 @@ export class ShellyDiscoveryService {
                     timeout: error.code === 'ECONNABORTED',
                 });
             }),
+        );
+    }
+
+    public loadShellyActions(address: string): Observable<ShellyActionRecord> {
+        return from(axios.get<ShellyActionsResult>(`http://${address}/settings/actions`)).pipe(
+            map((result) => result.data.actions),
         );
     }
 

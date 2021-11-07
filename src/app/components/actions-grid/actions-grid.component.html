@@ -4,6 +4,12 @@
 
     <div *ngIf="selectedDevice != null">
         <h3>"{{displayName}}" Actions:</h3>
+
+        <div *ngIf="message != null" [ngClass]="messageClass">{{message}}</div>
+        <div>{{messageClass}}</div>
+
+        <div *ngIf="actions != null">{{actions.length}} Actions Loaded</div>
+
     </div>
 
 </div>

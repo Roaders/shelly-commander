@@ -1,10 +1,10 @@
 import { Mock, setupFunction, setupProperty } from '@morgan-stanley/ts-mocking-bird';
-import { ShellyDiscoveryService } from '../../services';
+import { ShellyService } from '../../services';
 import { IpRangeComponent } from './ip-range.component';
 
 describe(` (ip-range.component)`, () => {
     function createInstance() {
-        return new IpRangeComponent(Mock.create<ShellyDiscoveryService>().mock);
+        return new IpRangeComponent(Mock.create<ShellyService>().mock);
     }
 
     it(`should create`, () => {
