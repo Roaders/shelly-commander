@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
+import { GridOptions } from 'ag-grid-community';
 import { Subscription } from 'rxjs';
-import { ShellyActionRecord, ShellyDiscoveryResult } from '../../contracts';
+import { ShellyAction, ShellyActionRecord, ShellyDiscoveryResult } from '../../contracts';
 import { ShellyService } from '../../services';
 
 type MessageType = 'error' | 'message';
@@ -12,15 +13,31 @@ type MessageType = 'error' | 'message';
 export class ActionsGridComponent {
     constructor(private shellyService: ShellyService) {}
 
+    public actionGridOptions: GridOptions = {
+        columnDefs: [
+            {
+                valueGetter: (row): string => row.data.action.enabled,
+                width: 100,
+            },
+            {
+                headerName: 'Name',
+                field: 'name',
+            },
+            {
+                headerName: 'Index',
+                valueGetter: (row): string => row.data.action.index,
+                width: 100,
+            },
+        ],
+        domLayout: 'autoHeight',
+    };
+
     private subscription: Subscription | undefined;
 
-    private _actions: ShellyActionRecord | undefined;
+    private _actionsList: { name: string; action: ShellyAction }[] | undefined;
 
-    public get actions(): `${string}_${number}`[] | undefined {
-        if (this._actions == null) {
-            return undefined;
-        }
-        return Object.entries(this._actions).map(([name, action]) => `${name}_${action.index}` as const);
+    public get actions(): { name: string; action: ShellyAction }[] | undefined {
+        return this._actionsList;
     }
 
     private _messageType: MessageType = 'message';
@@ -44,7 +61,7 @@ export class ActionsGridComponent {
     @Input()
     public set selectedDevice(value: ShellyDiscoveryResult | undefined) {
         this._selectedDevice = value;
-        this._actions = undefined;
+        this._actionsList = undefined;
 
         if (this.subscription != null) {
             this.subscription.unsubscribe();
@@ -73,7 +90,14 @@ export class ActionsGridComponent {
 
     private onActionsLoaded(actions: ShellyActionRecord) {
         this.displayMessage(undefined);
-        this._actions = actions;
+
+        this._actionsList = Object.entries(actions).reduce(
+            (allActions, [name, currentActions]) => [
+                ...allActions,
+                ...currentActions.map((currentAction) => ({ name, action: currentAction })),
+            ],
+            new Array<{ name: string; action: ShellyAction }>(),
+        );
     }
 
     private displayMessage(message?: string, type: MessageType = 'message') {

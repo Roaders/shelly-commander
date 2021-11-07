@@ -8,7 +8,16 @@
         <div *ngIf="message != null" [ngClass]="messageClass">{{message}}</div>
         <div>{{messageClass}}</div>
 
-        <div *ngIf="actions != null">{{actions.length}} Actions Loaded</div>
+        <div *ngIf="actions != null">
+
+            <ag-grid-angular 
+                class="ag-theme-alpine w-100" 
+                [rowData]="actions" 
+                [gridOptions]="actionGridOptions"
+                >
+            </ag-grid-angular>
+
+        </div>
 
     </div>
 

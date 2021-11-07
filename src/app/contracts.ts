@@ -31,7 +31,7 @@ export type ShellyAction = {
     urls: string[];
 };
 
-export type ShellyActionRecord = Record<string, ShellyAction>;
+export type ShellyActionRecord = Record<string, ShellyAction[]>;
 
 export type ShellyActionsResult = {
     actions: ShellyActionRecord;
