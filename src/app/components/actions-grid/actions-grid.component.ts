@@ -21,7 +21,7 @@ export class ActionsGridComponent {
 
     constructor(private shellyService: ShellyService) {}
 
-    public actionGridOptions: GridOptions = {
+    public readonly actionGridOptions: GridOptions = {
         columnDefs: [
             {
                 colId: 'nameColumn',
@@ -47,7 +47,7 @@ export class ActionsGridComponent {
 
     private _actionsList: ActionRow[] | undefined;
 
-    public get actions(): ActionRow[] | undefined {
+    public get actionsList(): ActionRow[] | undefined {
         return this._actionsList;
     }
 
@@ -86,13 +86,20 @@ export class ActionsGridComponent {
         }
     }
 
+    private _hasEdits = false;
+
+    public get hasEdits(): boolean {
+        return this._hasEdits;
+    }
+
     public get displayName(): string | undefined {
         return this.selectedDevice?.settings.name || this.selectedDevice?.settings.device.hostname;
     }
 
     private loadActions(selectedDevice: ShellyDiscoveryResult) {
+        this.reset();
         this.displayMessage('Loading actions...');
-        this._edits = {};
+
         this.subscription = this.shellyService.loadShellyActions(selectedDevice.address).subscribe(
             (actions) => this.onActionsLoaded(actions),
             () => this.displayMessage(`Error loading actions for ${selectedDevice.address}`, 'error'),
@@ -116,6 +123,7 @@ export class ActionsGridComponent {
         actionEdits.enabled = !data.enabled;
 
         this.updateRows();
+        this.updateHasEdits();
     }
 
     private displayMessage(message?: string, type: MessageType = 'message') {
@@ -124,15 +132,19 @@ export class ActionsGridComponent {
     }
 
     private updateRows() {
-        this._actionsList = Object.entries(this._actions || {}).reduce(
-            (allActions, [name, currentActions]) => [
-                ...allActions,
-                ...currentActions.map((currentAction) => this.createActionRow(name, currentAction)),
-            ],
-            new Array<ActionRow>(),
+        this._actionsList = reduceActions(this._actions || {}).map(({ name, action }) =>
+            this.createActionRow(name, action),
         );
 
         this.sizeColumns();
+    }
+
+    private updateHasEdits() {
+        this._hasEdits = reduceActions(this._actions || {}).some(({ name, action }) => {
+            const id = getActionRowId(name, action);
+            const edits = this._edits[id];
+            return edits != null && edits.enabled != action.enabled;
+        });
     }
 
     private sizeColumns() {
@@ -146,6 +158,26 @@ export class ActionsGridComponent {
 
         return { name, id, enabled, action };
     }
+
+    private reset() {
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
+        this.subscription = undefined;
+        this._edits = {};
+        this._actions = undefined;
+        this._actionsList = undefined;
+        this._message = undefined;
+        this._messageType = 'message';
+        this._hasEdits = false;
+    }
+}
+
+function reduceActions(actions: ShellyActionRecord): { name: string; action: ShellyAction }[] {
+    return Object.entries(actions).reduce(
+        (allActions, [name, currentActions]) => [...allActions, ...currentActions.map((action) => ({ name, action }))],
+        new Array<{ name: string; action: ShellyAction }>(),
+    );
 }
 
 function getActionRowId(name: string, action: ShellyAction): string {
