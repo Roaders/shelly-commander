@@ -1,42 +1,53 @@
 import { Component, Input } from '@angular/core';
-import { GridOptions } from 'ag-grid-community';
+import { ColumnApi, GridOptions } from 'ag-grid-community';
 import { Subscription } from 'rxjs';
 import { ShellyAction, ShellyActionRecord, ShellyDiscoveryResult } from '../../contracts';
 import { ShellyService } from '../../services';
+import { CheckboxCellRenderer } from '../cell-renderers/checkbox/checkbox.cell-renderer';
 
 type MessageType = 'error' | 'message';
+
+type ActionRow = { id: string; name: string; enabled: boolean; action: ShellyAction };
 
 @Component({
     selector: 'actions-grid',
     templateUrl: './actions-grid.component.html',
 })
 export class ActionsGridComponent {
+    private columnApi: ColumnApi | undefined;
+
+    private _actions: ShellyActionRecord | undefined;
+    private _edits: Record<string, { enabled: boolean }> = {};
+
     constructor(private shellyService: ShellyService) {}
 
     public actionGridOptions: GridOptions = {
         columnDefs: [
             {
-                valueGetter: (row): string => row.data.action.enabled,
-                width: 100,
-            },
-            {
+                colId: 'nameColumn',
                 headerName: 'Name',
                 field: 'name',
+                valueGetter: (params) => `${params.data.name} (${params.data.action.index})`,
             },
             {
-                headerName: 'Index',
-                valueGetter: (row): string => row.data.action.index,
-                width: 100,
+                colId: 'enabledColumn',
+                valueGetter: (row): string => row.data.enabled,
+                cellRendererFramework: CheckboxCellRenderer,
+                cellRendererParams: { owner: this },
             },
         ],
         domLayout: 'autoHeight',
+        onGridReady: (event) => {
+            this.columnApi = event.columnApi;
+            this.sizeColumns();
+        },
     };
 
     private subscription: Subscription | undefined;
 
-    private _actionsList: { name: string; action: ShellyAction }[] | undefined;
+    private _actionsList: ActionRow[] | undefined;
 
-    public get actions(): { name: string; action: ShellyAction }[] | undefined {
+    public get actions(): ActionRow[] | undefined {
         return this._actionsList;
     }
 
@@ -80,8 +91,8 @@ export class ActionsGridComponent {
     }
 
     private loadActions(selectedDevice: ShellyDiscoveryResult) {
-        console.log(`Loading actions: ${selectedDevice.address}`);
         this.displayMessage('Loading actions...');
+        this._edits = {};
         this.subscription = this.shellyService.loadShellyActions(selectedDevice.address).subscribe(
             (actions) => this.onActionsLoaded(actions),
             () => this.displayMessage(`Error loading actions for ${selectedDevice.address}`, 'error'),
@@ -90,18 +101,53 @@ export class ActionsGridComponent {
 
     private onActionsLoaded(actions: ShellyActionRecord) {
         this.displayMessage(undefined);
+        this._actions = actions;
 
-        this._actionsList = Object.entries(actions).reduce(
-            (allActions, [name, currentActions]) => [
-                ...allActions,
-                ...currentActions.map((currentAction) => ({ name, action: currentAction })),
-            ],
-            new Array<{ name: string; action: ShellyAction }>(),
-        );
+        this.updateRows();
+    }
+
+    public onEnabledClick(data?: ActionRow) {
+        if (data == null) {
+            return;
+        }
+
+        const actionEdits = (this._edits[data.id] = this._edits[data.id] || { enabled: !data.enabled });
+
+        actionEdits.enabled = !data.enabled;
+
+        this.updateRows();
     }
 
     private displayMessage(message?: string, type: MessageType = 'message') {
         this._message = message;
         this._messageType = type;
     }
+
+    private updateRows() {
+        this._actionsList = Object.entries(this._actions || {}).reduce(
+            (allActions, [name, currentActions]) => [
+                ...allActions,
+                ...currentActions.map((currentAction) => this.createActionRow(name, currentAction)),
+            ],
+            new Array<ActionRow>(),
+        );
+
+        this.sizeColumns();
+    }
+
+    private sizeColumns() {
+        this.columnApi?.autoSizeColumn('nameColumn');
+        this.columnApi?.autoSizeColumn('enabledColumn');
+    }
+
+    private createActionRow(name: string, action: ShellyAction): ActionRow {
+        const id = getActionRowId(name, action);
+        const enabled = this._edits[id]?.enabled ?? action.enabled;
+
+        return { name, id, enabled, action };
+    }
+}
+
+function getActionRowId(name: string, action: ShellyAction): string {
+    return `${name}_${action.index}`;
 }

@@ -3,7 +3,7 @@ import { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
 import { discoveredDevicesStorageKey } from '../../constants';
-import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult, ShellySettings } from '../../contracts';
+import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
 import { compareAddresses, formatMac } from '../../helpers';
 import { ShellyService } from '../../services';
 import { AddressCellRenderer } from '../cell-renderers/address/address.cell-renderer';
