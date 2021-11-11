@@ -101,7 +101,7 @@ export function convertToIpGroup(stringValue: string): IpGroup | undefined {
     }
 
     if (matchRangeRegExp.test(stringValue)) {
-        const values = stringValue.split('-');
+        const values = stringValue.split('-') as [string, string];
         return { min: parseInt(values[0]), max: parseInt(values[1]) };
     }
 

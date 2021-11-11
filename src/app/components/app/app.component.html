@@ -8,7 +8,9 @@
 <div class="container">
     <ip-range></ip-range>
 
-    <results-grid></results-grid>
+    <results-grid (onDeviceSelected)="selectedDevice = $event"></results-grid>
+
+    <actions-grid [selectedDevice]="selectedDevice"></actions-grid>
 
     <div><a href="https://github.com/Roaders/shelly-commander" target="_blank">GitHub</a></div>
 

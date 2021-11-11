@@ -1,0 +1,42 @@
+<div class="pt-2">
+    <div *ngIf="selectedDevice == null">Select a device...</div>
+
+    <div *ngIf="selectedDevice != null">
+        <h3>"{{displayName}}" Actions:</h3>
+
+        <div *ngIf="message != null" [ngClass]="messageClass">{{message}}</div>
+        <div>{{messageClass}}</div>
+
+        <div *ngIf="actionsList != null">
+
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Url Template</span>
+                </div>
+                <input type="text" class="form-control" #urlTemplateInput [(ngModel)]="urlTemplate" (focus)="urlTemplateHasFocus()">
+            </div>
+
+            <div>
+                Insert tokens into url<span *ngIf="!enableTemplateKeys"> (place cursor in template url to specify insertion position)</span>:
+            </div>
+
+            <div>
+                <button *ngFor="let key of templateKeys" type="button" class="btn-sm btn btn-primary me-2" (click)="addKey(key)" [disabled]="!enableTemplateKeys">{{key}}</button>
+            </div>
+
+            <div>
+                <button type="button" class="btn-sm btn btn-primary my-2" (click)="updateAll()" >Update / Add All</button>
+            </div>
+
+            <ag-grid-angular class="ag-theme-alpine w-100 pt-2" [rowData]="actionsList" [gridOptions]="actionGridOptions">
+            </ag-grid-angular>
+
+            <div class="pt-2 d-flex justify-content-center h-100">
+                <button type="button" class="btn btn-primary" [disabled]="!hasEdits" (click)="performUpdate()">Update Actions</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

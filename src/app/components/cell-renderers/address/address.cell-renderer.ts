@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { ICellRendererParams } from 'ag-grid-community';
+import { ICellRenderer, ICellRendererParams } from 'ag-grid-community';
 
 @Component({
     selector: 'address-cell-renderer',
     templateUrl: './address.cell-renderer.html',
 })
-export class AddressCellRenderer {
+export class AddressCellRenderer implements ICellRenderer {
     private _ipAddress = '-';
 
     public get ipAddress(): string {
@@ -16,8 +16,10 @@ export class AddressCellRenderer {
         this._ipAddress = this.getValueToDisplay(params);
     }
 
-    public refresh(params: ICellRendererParams): void {
+    public refresh(params: ICellRendererParams): boolean {
         this._ipAddress = this.getValueToDisplay(params);
+
+        return true;
     }
 
     private getValueToDisplay(params: ICellRendererParams) {

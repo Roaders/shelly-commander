@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
-import { ColDef, GridOptions } from 'ag-grid-community';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
 import { discoveredDevicesStorageKey } from '../../constants';
 import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
 import { compareAddresses, formatMac } from '../../helpers';
-import { ShellyDiscoveryService } from '../../services';
+import { ShellyService } from '../../services';
 import { AddressCellRenderer } from '../cell-renderers/address/address.cell-renderer';
 import { EnableCorsCellRenderer } from '../cell-renderers/enable-cors/enable-cors.cell-renderer';
 
@@ -20,6 +20,17 @@ const defaultColDef: ColDef = {
     styleUrls: ['./results-grid.component.scss'],
 })
 export class ResultsGridComponent {
+    private _gridApi: GridApi | undefined;
+
+    @Output()
+    public readonly onDeviceSelected = new EventEmitter<ShellyDiscoveryResult | undefined>();
+
+    private _selectedDevice: ShellyDiscoveryResult | undefined;
+
+    public get selectedDevice(): ShellyDiscoveryResult | undefined {
+        return this._selectedDevice;
+    }
+
     public discoveredGridOptions: GridOptions = {
         columnDefs: [
             {
@@ -39,6 +50,10 @@ export class ResultsGridComponent {
         ],
         domLayout: 'autoHeight',
         defaultColDef,
+        rowSelection: 'single',
+        onRowSelected: () => this.onRowSelected(),
+        onGridReady: (event) => (this._gridApi = event.api),
+        enableCellTextSelection: true,
     };
 
     public possibleGridOptions: GridOptions = {
@@ -87,8 +102,8 @@ export class ResultsGridComponent {
         return this._scanStarted;
     }
 
-    constructor(private discoveryService: ShellyDiscoveryService) {
-        discoveryService.resultsStream.subscribe((message) => this.handleStreamResult(message));
+    constructor(private shellyService: ShellyService) {
+        shellyService.discoveryStream.subscribe((message) => this.handleStreamResult(message));
     }
 
     public enableCors(address: string): void {
@@ -112,10 +127,20 @@ export class ResultsGridComponent {
                 .pipe(
                     take(1),
                     tap(() => corsWindow.close()),
-                    mergeMap(() => this.discoveryService.loadShellyDetails(address)),
+                    mergeMap(() => this.shellyService.loadShellyDetails(address)),
                 )
                 .subscribe((message) => this.handleStreamResult(message));
         }
+    }
+
+    private onRowSelected(): void {
+        const discoveryResult: ShellyDiscoveryResult | undefined = this._gridApi?.getSelectedRows()[0];
+        this.selectDevice(discoveryResult);
+    }
+
+    private selectDevice(result: ShellyDiscoveryResult | undefined) {
+        this._selectedDevice = result;
+        this.onDeviceSelected.emit(result);
     }
 
     private handleStreamResult(message: DiscoveryMessages) {
@@ -125,6 +150,7 @@ export class ResultsGridComponent {
                 this._scanStarted = true;
                 this._possibleShellyLookup = undefined;
                 this._shellyLookup = undefined;
+                this.selectDevice(undefined);
                 break;
 
             case 'streamComplete':

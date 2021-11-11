@@ -1,3 +1,5 @@
+import { ICellRendererParams } from 'ag-grid-community';
+
 export type NumericRange =
     | {
           min: number;
@@ -16,6 +18,18 @@ export type IpGroup = number | '*' | NumericRange;
 
 export type IpRange = [IpGroup, IpGroup, IpGroup, IpGroup];
 
+export type ActionRow = { rowType: 'actionRow'; id: string; name: string; enabled: boolean; action: ShellyAction };
+export type ActionURLRow = {
+    rowType: 'actionURLRow';
+    id: string;
+    actionName: string;
+    action: ShellyAction;
+    updateValue: boolean;
+    existingUrl?: string;
+    updatedUrl: string;
+    index: number;
+};
+
 export type StartStream = {
     type: 'startStream';
     addresses: string[];
@@ -23,6 +37,18 @@ export type StartStream = {
 
 export type StreamComplete = {
     type: 'streamComplete';
+};
+
+export type ShellyAction = {
+    index: number;
+    enabled: boolean;
+    urls: string[];
+};
+
+export type ShellyActionRecord = Record<string, ShellyAction[]>;
+
+export type ShellyActionsResult = {
+    actions: ShellyActionRecord;
 };
 
 export type ShellyDiscoveryResult = {
@@ -129,3 +155,15 @@ export type ShellySettings = {
     allow_cross_origin: boolean;
     wifirecovery_reboot_enabled: boolean;
 };
+
+export interface IActionsGrid {
+    onEnabledClick: (row: ActionRow | ActionURLRow) => void;
+}
+
+export interface IActionsGridCellRendererParams extends ICellRendererParams {
+    owner?: IActionsGrid;
+}
+
+export type UrlTemplateKeys = 'deviceName' | 'deviceHostName' | 'deviceMac' | 'deviceType' | 'action' | 'index';
+
+export type StringTemplateVariables = Record<UrlTemplateKeys, string>;
