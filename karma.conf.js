@@ -4,33 +4,11 @@
 const path = require('path');
 
 process.env.CHROME_BIN = require('puppeteer').executablePath();
-const coverage = process.argv.indexOf('--no-coverage') < 0;
 
 const reporters = ['progress', 'kjhtml'];
 
 // webpack rules
 const rules = [{ test: /\.ts$|.tsx$/, use: [{ loader: 'ts-loader', options: { configFile: 'tsconfig.json' } }] }];
-
-/**
- * If --no-coverage is passed then we do not add any coverage reports or coverage instrumentation
- * This means that the tests are much easier to debug as coverage instrumentation alters the code
- */
-if (coverage) {
-    reporters.push('coverage-istanbul');
-
-    rules.push({
-        test: /\.ts$|.tsx$/,
-        use: [
-            {
-                loader: 'istanbul-instrumenter-loader',
-                options: { esModules: true },
-            },
-        ],
-        enforce: 'post',
-        include: path.resolve('src'),
-        exclude: /\.spec.ts$/,
-    });
-}
 
 module.exports = function (config) {
     config.set({
@@ -87,12 +65,6 @@ module.exports = function (config) {
         // Concurrency level
         // how many browser should be started simultaneous
         concurrency: Infinity,
-
-        coverageIstanbulReporter: {
-            reports: ['html', 'text-summary', 'cobertura'],
-            dir: path.join(__dirname, 'coverage'),
-            fixWebpackSourcePaths: true,
-        },
 
         webpack: {
             mode: 'development',
