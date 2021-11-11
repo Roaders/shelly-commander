@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { ColumnApi, GridOptions } from 'ag-grid-community';
 import { Subscription } from 'rxjs';
 import {
@@ -8,34 +8,42 @@ import {
     ShellyAction,
     ShellyActionRecord,
     ShellyDiscoveryResult,
+    StringTemplateVariables,
 } from '../../contracts';
 import { isActionRow, isActionUrlRow } from '../../helpers';
 import { ShellyService } from '../../services';
 import { CheckboxCellRenderer } from '../cell-renderers/checkbox/checkbox.cell-renderer';
 import format from 'string-template';
+import { TemplateKeys } from '../../constants';
 
 type MessageType = 'error' | 'message';
-
-type StringTemplateVariables = {
-    deviceName: string;
-    deviceHostName: string;
-    deviceMac: string;
-    deviceType: string;
-    action: string;
-    index: string;
-};
 
 @Component({
     selector: 'actions-grid',
     templateUrl: './actions-grid.component.html',
 })
 export class ActionsGridComponent implements IActionsGrid {
+    @ViewChild('urlTemplateInput')
+    public urlTemplateInput?: ElementRef<HTMLInputElement>;
+
     private columnApi: ColumnApi | undefined;
 
     private _actions: ShellyActionRecord | undefined;
     private _edits: Record<string, { enabled: boolean; updateUrls: boolean[] }> = {};
 
     constructor(private shellyService: ShellyService) {}
+
+    private readonly _templateKeys = TemplateKeys.map((key) => `{${key}}`);
+
+    public get templateKeys(): string[] {
+        return this._templateKeys;
+    }
+
+    private _enableKeys = false;
+
+    public get enableTemplateKeys(): boolean {
+        return this._enableKeys;
+    }
 
     private _urlTemplate = 'http://192.168.0.1/api?device={deviceName}&action={action}&index={index}';
 
@@ -161,6 +169,55 @@ export class ActionsGridComponent implements IActionsGrid {
         this.updateRows();
     }
 
+    public urlTemplateHasFocus(): void {
+        this._enableKeys = true;
+    }
+
+    public addKey(key: string) {
+        const urlInput = this.urlTemplateInput?.nativeElement;
+
+        if (urlInput != null && urlInput.selectionStart != null && urlInput.selectionEnd != null) {
+            let url = urlInput.value;
+
+            url = `${url.substr(0, urlInput.selectionStart)}${key}${url.substr(urlInput.selectionEnd)}`;
+
+            this.urlTemplate = url;
+        }
+    }
+
+    public updateAll() {
+        reduceActions(this._actions || {}, this.urlTemplate, this.selectedDevice).forEach((row) => {
+            const device = this.selectedDevice;
+
+            if (device == null) {
+                throw new Error(`Attempted to select all rows when selected device was not defined`);
+            }
+
+            const { name, action } = row;
+            const id = getActionRowId(name, action);
+            const actionEdits = (this._edits[id] = this._edits[id] || {
+                enabled: true,
+                updateUrls: [],
+            });
+
+            actionEdits.enabled = true;
+
+            if (
+                action.urls.some(
+                    (url) => url != null && url == generateUrl(name, action.index, device, this.urlTemplate),
+                )
+            ) {
+                actionEdits.updateUrls = [];
+                return;
+            }
+
+            actionEdits.updateUrls[0] = true;
+        });
+
+        this.updateRows();
+        this.updateHasEdits();
+    }
+
     public onEnabledClick(data: unknown) {
         if (data == null) {
             return;
@@ -195,13 +252,17 @@ export class ActionsGridComponent implements IActionsGrid {
     }
 
     private updateRows() {
-        this._actionsList = reduceActions(this._actions || {}).map((expandedRow) => this.createGridRow(expandedRow));
+        this._actionsList = reduceActions(
+            this._actions || {},
+            this.urlTemplate,
+            this.selectedDevice,
+        ).map((expandedRow) => this.createGridRow(expandedRow));
 
         this.sizeColumns();
     }
 
     private updateHasEdits() {
-        this._hasEdits = reduceActions(this._actions || {}).some((row) => {
+        this._hasEdits = reduceActions(this._actions || {}, this.urlTemplate, this.selectedDevice).some((row) => {
             const { name, action } = row;
             const id = getActionRowId(name, action);
             const edits = this._edits[id];
@@ -213,30 +274,11 @@ export class ActionsGridComponent implements IActionsGrid {
             if (row.type === 'actionRow') {
                 return edits.enabled != action.enabled;
             } else if (row.type === 'actionURLRow') {
-                return edits.updateUrls[row.index] && (row.url == null || row.url != this.generateUrl(row));
+                return edits.updateUrls[row.index] && (row.url == null || row.url != row.updateUrl);
             }
 
             return false;
         });
-    }
-
-    private generateUrl(row: ExpandedActionURLRow): string {
-        const device = this.selectedDevice;
-
-        if (device == null) {
-            throw new Error(`Attempted to generate url when there was no selected device`);
-        }
-
-        const variables: StringTemplateVariables = {
-            action: encodeURIComponent(row.name),
-            deviceName: encodeURIComponent(device.settings?.name),
-            deviceHostName: encodeURIComponent(device.settings.device.hostname),
-            index: encodeURIComponent(row.action.index.toString()),
-            deviceMac: encodeURIComponent(device.settings.device.mac),
-            deviceType: encodeURIComponent(device.settings.device.type),
-        };
-
-        return format(this._urlTemplate, variables);
     }
 
     private sizeColumns() {
@@ -263,7 +305,7 @@ export class ActionsGridComponent implements IActionsGrid {
                 updateValue,
                 rowType: 'actionURLRow',
                 index,
-                updatedUrl: this.generateUrl(expandedRow),
+                updatedUrl: expandedRow.updateUrl,
                 existingUrl: expandedRow.url,
                 actionName: name,
                 action,
@@ -294,15 +336,20 @@ type ExpandedActionURLRow = {
     action: ShellyAction;
     index: number;
     url: string | undefined;
+    updateUrl: string;
 };
 type ExpandedRow = ExpandedActionRow | ExpandedActionURLRow;
 
-function reduceActions(actions: ShellyActionRecord): ExpandedRow[] {
+function reduceActions(actions: ShellyActionRecord, template: string, device?: ShellyDiscoveryResult): ExpandedRow[] {
+    if (device == null) {
+        throw new Error(`Attempted to generate url when there was no selected device`);
+    }
+
     return Object.entries(actions).reduce(
         (allActions, [name, currentActions]) => [
             ...allActions,
             ...currentActions.reduce(
-                (actionUrls, action) => [...actionUrls, ...reduceActionUrls(name, action)],
+                (actionUrls, action) => [...actionUrls, ...reduceActionUrls(name, action, device, template)],
                 new Array<ExpandedRow>(),
             ),
         ],
@@ -310,14 +357,20 @@ function reduceActions(actions: ShellyActionRecord): ExpandedRow[] {
     );
 }
 
-function reduceActionUrls(name: string, action: ShellyAction): ExpandedRow[] {
+function reduceActionUrls(
+    name: string,
+    action: ShellyAction,
+    device: ShellyDiscoveryResult,
+    template: string,
+): ExpandedRow[] {
+    const generatedUrl = generateUrl(name, action.index, device, template);
     const rows = [
         { type: 'actionRow' as const, name, action },
-        ...action.urls.map((url, index) => createExpandedUrlRow(name, action, index, url)),
+        ...action.urls.map((url, index) => createExpandedUrlRow(name, action, index, url, generatedUrl)),
     ];
 
-    if (action.urls.length < 5) {
-        rows.push(createExpandedUrlRow(name, action, action.urls.length, undefined));
+    if (action.urls.length < 5 && action.urls.every((url) => url != null && url != generatedUrl)) {
+        rows.push(createExpandedUrlRow(name, action, action.urls.length, undefined, generatedUrl));
     }
 
     return rows;
@@ -327,9 +380,17 @@ function createExpandedUrlRow(
     name: string,
     action: ShellyAction,
     index: number,
-    url: string | undefined,
+    existingUrl: string | undefined,
+    generatedUrl: string,
 ): ExpandedActionURLRow {
-    return { type: 'actionURLRow' as const, name, action, url, index };
+    return {
+        type: 'actionURLRow' as const,
+        name,
+        action,
+        url: existingUrl,
+        index,
+        updateUrl: generatedUrl,
+    };
 }
 
 function getActionRowId(name: string, action: ShellyAction): string {
@@ -348,4 +409,17 @@ function rowIsEnabled(row: unknown): boolean | undefined {
     }
 
     return undefined;
+}
+
+function generateUrl(name: string, index: number, device: ShellyDiscoveryResult, template: string): string {
+    const variables: StringTemplateVariables = {
+        action: encodeURIComponent(name),
+        deviceName: encodeURIComponent(device.settings?.name),
+        deviceHostName: encodeURIComponent(device.settings.device.hostname),
+        index: encodeURIComponent(index.toString()),
+        deviceMac: encodeURIComponent(device.settings.device.mac),
+        deviceType: encodeURIComponent(device.settings.device.type),
+    };
+
+    return format(template, variables);
 }

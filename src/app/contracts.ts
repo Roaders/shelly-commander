@@ -163,3 +163,7 @@ export interface IActionsGrid {
 export interface IActionsGridCellRendererParams extends ICellRendererParams {
     owner?: IActionsGrid;
 }
+
+export type UrlTemplateKeys = 'deviceName' | 'deviceHostName' | 'deviceMac' | 'deviceType' | 'action' | 'index';
+
+export type StringTemplateVariables = Record<UrlTemplateKeys, string>;
