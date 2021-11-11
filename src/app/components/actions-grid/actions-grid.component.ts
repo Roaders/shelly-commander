@@ -11,7 +11,7 @@ import {
     StringTemplateVariables,
 } from '../../contracts';
 import { isActionRow, isActionUrlRow, isDefined } from '../../helpers';
-import { ShellyService } from '../../services';
+import { ShellyService, URLTemplateService } from '../../services';
 import { CheckboxCellRenderer } from '../cell-renderers/checkbox/checkbox.cell-renderer';
 import format from 'string-template';
 import { TemplateKeys } from '../../constants';
@@ -31,7 +31,7 @@ export class ActionsGridComponent implements IActionsGrid {
     private _actions: ShellyActionRecord | undefined;
     private _edits: Record<string, { enabled: boolean; updateUrls: boolean[] }> = {};
 
-    constructor(private shellyService: ShellyService) {}
+    constructor(private shellyService: ShellyService, private urlTemplateService: URLTemplateService) {}
 
     private readonly _templateKeys = TemplateKeys.map((key) => `{${key}}`);
 
@@ -45,14 +45,12 @@ export class ActionsGridComponent implements IActionsGrid {
         return this._enableKeys;
     }
 
-    private _urlTemplate = 'http://192.168.0.1/api?device={deviceName}&action={action}&index={index}';
-
     public get urlTemplate(): string {
-        return this._urlTemplate;
+        return this.urlTemplateService.templateUrl;
     }
 
     public set urlTemplate(value: string) {
-        this._urlTemplate = value;
+        this.urlTemplateService.templateUrl = value;
 
         this.updateRows();
         this.updateHasEdits();
