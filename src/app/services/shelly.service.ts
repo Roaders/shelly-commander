@@ -1,9 +1,10 @@
 import { Injectable } from '@morgan-stanley/needle';
 import { from, Observable, of, Subject, Subscription } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 import {
     DiscoveryMessages,
     IpRange,
+    ShellyAction,
     ShellyActionRecord,
     ShellyActionsResult,
     ShellyDiscoveryError,
@@ -86,5 +87,29 @@ export class ShellyService {
                     });
                 },
             );
+    }
+
+    public updateDeviceActions(address: string, actions: ShellyActionRecord): Observable<ShellyActionRecord> {
+        console.log(`updateDeviceActions`, { address, actions });
+
+        const flattenedActions = Object.entries(actions).reduce(
+            (actions, [name, channels]) => [...actions, ...channels.map((action) => ({ name, action }))],
+            new Array<{ name: string; action: ShellyAction }>(),
+        );
+
+        return from(flattenedActions).pipe(
+            mergeMap(({ name, action }) => this.updateShellyActionUrls(address, name, action), 1),
+            toArray(),
+            mergeMap(() => this.loadShellyActions(address)),
+        );
+    }
+
+    public updateShellyActionUrls(address: string, name: string, action: ShellyAction): Observable<ShellyActionRecord> {
+        const urlParams = action.urls.map((url) => `urls[]=${encodeURIComponent(url)}`).join('&');
+        return from(
+            axios.get<ShellyActionsResult>(
+                `http://${address}/settings/actions?index=${action.index}&name=${name}&enabled=${action.enabled}&${urlParams}`,
+            ),
+        ).pipe(map((result) => result.data.actions));
     }
 }

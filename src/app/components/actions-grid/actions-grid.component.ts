@@ -10,7 +10,7 @@ import {
     ShellyDiscoveryResult,
     StringTemplateVariables,
 } from '../../contracts';
-import { isActionRow, isActionUrlRow } from '../../helpers';
+import { isActionRow, isActionUrlRow, isDefined } from '../../helpers';
 import { ShellyService } from '../../services';
 import { CheckboxCellRenderer } from '../cell-renderers/checkbox/checkbox.cell-renderer';
 import format from 'string-template';
@@ -244,6 +244,47 @@ export class ActionsGridComponent implements IActionsGrid {
 
         this.updateRows();
         this.updateHasEdits();
+    }
+
+    public performUpdate() {
+        const device = this.selectedDevice;
+        if (device == null) {
+            throw new Error(`Attempted to update actions with no selected device`);
+        }
+        this.displayMessage('Updating Actions...');
+
+        const actions = reduceActions(this._actions || {}, this.urlTemplate, this.selectedDevice)
+            .filter((row) => row.type === 'actionRow')
+            .reduce<ShellyActionRecord>((actions, row) => {
+                const { name, action } = row;
+                const id = getActionRowId(name, action);
+                const actionEdits = (this._edits[id] = this._edits[id] || {
+                    enabled: action.enabled,
+                    updateUrls: [],
+                });
+
+                if (actionEdits.enabled != action.enabled || actionEdits.updateUrls.some((updated) => updated)) {
+                    const actionChannels = (actions[name] = actions[name] || []);
+                    actionChannels.push({
+                        enabled: actionEdits.enabled,
+                        index: action.index,
+                        urls: Array.from({ length: Math.max(actionEdits.updateUrls.length, action.urls.length) })
+                            .map((_, index) =>
+                                actionEdits.updateUrls[index]
+                                    ? generateUrl(name, action.index, device, this.urlTemplate)
+                                    : action.urls[index],
+                            )
+                            .filter(isDefined),
+                    });
+                }
+
+                return actions;
+            }, {});
+
+        this.subscription = this.shellyService.updateDeviceActions(device.address, actions).subscribe(
+            (actions) => this.onActionsLoaded(actions),
+            () => this.displayMessage(`Error updating actions for ${device.address}`, 'error'),
+        );
     }
 
     private displayMessage(message?: string, type: MessageType = 'message') {
