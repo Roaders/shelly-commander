@@ -1,13 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { ColumnApi, GridOptions } from 'ag-grid-community';
 import { Subscription } from 'rxjs';
-import { ShellyAction, ShellyActionRecord, ShellyDiscoveryResult } from '../../contracts';
+import { ActionRow, ActionURLRow, ShellyAction, ShellyActionRecord, ShellyDiscoveryResult } from '../../contracts';
+import { isActionRow, isActionUrlRow } from '../../helpers';
 import { ShellyService } from '../../services';
 import { CheckboxCellRenderer } from '../cell-renderers/checkbox/checkbox.cell-renderer';
 
 type MessageType = 'error' | 'message';
-
-type ActionRow = { id: string; name: string; enabled: boolean; action: ShellyAction };
 
 @Component({
     selector: 'actions-grid',
@@ -27,13 +26,24 @@ export class ActionsGridComponent {
                 colId: 'nameColumn',
                 headerName: 'Name',
                 field: 'name',
-                valueGetter: (params) => `${params.data.name} (${params.data.action.index})`,
+                valueGetter: (params) =>
+                    isActionRow(params.data) ? `${params.data.name} (${params.data.action.index})` : undefined,
             },
             {
                 colId: 'enabledColumn',
-                valueGetter: (row): string => row.data.enabled,
+                valueGetter: (row): boolean => rowIsEnabled(row.data),
                 cellRendererFramework: CheckboxCellRenderer,
                 cellRendererParams: { owner: this },
+            },
+            {
+                colId: 'existingUrl',
+                headerName: 'Existing Url',
+                valueGetter: (row): string | undefined => (isActionUrlRow(row.data) ? row.data.existingUrl : undefined),
+            },
+            {
+                colId: 'updatedUrl',
+                headerName: 'Updated Url',
+                valueGetter: (row): string | undefined => (isActionUrlRow(row.data) ? row.data.updatedUrl : undefined),
             },
         ],
         domLayout: 'autoHeight',
@@ -45,9 +55,9 @@ export class ActionsGridComponent {
 
     private subscription: Subscription | undefined;
 
-    private _actionsList: ActionRow[] | undefined;
+    private _actionsList: (ActionRow | ActionURLRow)[] | undefined;
 
-    public get actionsList(): ActionRow[] | undefined {
+    public get actionsList(): (ActionRow | ActionURLRow)[] | undefined {
         return this._actionsList;
     }
 
@@ -132,9 +142,7 @@ export class ActionsGridComponent {
     }
 
     private updateRows() {
-        this._actionsList = reduceActions(this._actions || {}).map(({ name, action }) =>
-            this.createActionRow(name, action),
-        );
+        this._actionsList = reduceActions(this._actions || {}).map((expandedRow) => this.createGridRow(expandedRow));
 
         this.sizeColumns();
     }
@@ -152,11 +160,28 @@ export class ActionsGridComponent {
         this.columnApi?.autoSizeColumn('enabledColumn');
     }
 
-    private createActionRow(name: string, action: ShellyAction): ActionRow {
-        const id = getActionRowId(name, action);
-        const enabled = this._edits[id]?.enabled ?? action.enabled;
+    private createGridRow(expandedRow: ExpandedRow): ActionRow | ActionURLRow {
+        const { action, name } = expandedRow;
+        if (expandedRow.type === 'actionRow') {
+            const id = getActionRowId(name, action);
+            const enabled = this._edits[id]?.enabled ?? action.enabled;
 
-        return { name, id, enabled, action };
+            return { name, id, enabled, action, rowType: 'actionRow' };
+        } else if (expandedRow.type === 'actionURLRow') {
+            const id = getActionRowId(name, action);
+            const updateValue = this._edits[id]?.enabled ?? action.enabled;
+
+            return {
+                id,
+                updateValue,
+                rowType: 'actionURLRow',
+                index: expandedRow.index,
+                updatedUrl: 'updatedUrl',
+                existingUrl: expandedRow.url,
+            };
+        }
+
+        throw new Error(`Unknown row type: ${(expandedRow as any).type}`);
     }
 
     private reset() {
@@ -173,13 +198,55 @@ export class ActionsGridComponent {
     }
 }
 
-function reduceActions(actions: ShellyActionRecord): { name: string; action: ShellyAction }[] {
+type ExpandedActionRow = { type: 'actionRow'; name: string; action: ShellyAction };
+type ExpandedActionURLRow = {
+    type: 'actionURLRow';
+    name: string;
+    action: ShellyAction;
+    index: number;
+    url: string | undefined;
+};
+type ExpandedRow = ExpandedActionRow | ExpandedActionURLRow;
+
+function reduceActions(actions: ShellyActionRecord): ExpandedRow[] {
     return Object.entries(actions).reduce(
-        (allActions, [name, currentActions]) => [...allActions, ...currentActions.map((action) => ({ name, action }))],
-        new Array<{ name: string; action: ShellyAction }>(),
+        (allActions, [name, currentActions]) => [
+            ...allActions,
+            ...currentActions.reduce(
+                (actionUrls, action) => [...actionUrls, ...reduceActionUrls(name, action)],
+                new Array<ExpandedRow>(),
+            ),
+        ],
+        new Array<ExpandedRow>(),
     );
+}
+
+function reduceActionUrls(name: string, action: ShellyAction): ExpandedRow[] {
+    const rows = [
+        { type: 'actionRow' as const, name, action },
+        ...action.urls.map((url, index) => createExpandedUrlRow(name, action, index, url)),
+    ];
+
+    if (action.urls.length < 5) {
+        rows.push(createExpandedUrlRow(name, action, action.urls.length, undefined));
+    }
+
+    return rows;
+}
+
+function createExpandedUrlRow(
+    name: string,
+    action: ShellyAction,
+    index: number,
+    url: string | undefined,
+): ExpandedActionURLRow {
+    return { type: 'actionURLRow' as const, name, action, url, index };
 }
 
 function getActionRowId(name: string, action: ShellyAction): string {
     return `${name}_${action.index}`;
+}
+
+function rowIsEnabled(row: ActionRow): boolean {
+    return isActionRow(row) ? row.enabled : false;
 }

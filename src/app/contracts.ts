@@ -16,6 +16,16 @@ export type IpGroup = number | '*' | NumericRange;
 
 export type IpRange = [IpGroup, IpGroup, IpGroup, IpGroup];
 
+export type ActionRow = { rowType: 'actionRow'; id: string; name: string; enabled: boolean; action: ShellyAction };
+export type ActionURLRow = {
+    rowType: 'actionURLRow';
+    id: string;
+    updateValue: boolean;
+    existingUrl?: string;
+    updatedUrl: string;
+    index: number;
+};
+
 export type StartStream = {
     type: 'startStream';
     addresses: string[];

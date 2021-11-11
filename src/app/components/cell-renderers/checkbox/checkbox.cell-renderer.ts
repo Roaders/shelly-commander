@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ICellRenderer, ICellRendererParams } from 'ag-grid-community';
+import { isActionUrlRow } from '../../../helpers';
 import { ActionsGridComponent } from '../../actions-grid/actions-grid.component';
 
 @Component({
@@ -31,5 +32,16 @@ export class CheckboxCellRenderer implements ICellRenderer {
 
     public get value() {
         return this._params?.value;
+    }
+
+    public get label() {
+        if (isActionUrlRow(this._params?.data)) {
+            if (this._params?.data.existingUrl != null) {
+                return 'Update';
+            } else {
+                return 'Add';
+            }
+        }
+        return 'Enabled';
     }
 }
