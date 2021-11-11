@@ -12,7 +12,7 @@ If an error is received the address is added to the `possible shellies` list. If
 
 ## Action Urls
 
-![Shelly Commander Action Url Editor](readme-assets/actions-screen-shot.JPG)
+![Shelly Commander Action Url Editor](readme-assets/actions-screen-shot.jpg)
 
 Shelly Commander makes it easy to update all (or a subset) of the action urls for your device. You update a template url, select the actions you want to enable and update and hit the update button and they are all updated on the device.
 
