@@ -27,9 +27,7 @@ export class ShellyService {
     }
 
     public loadShellyDetails(address: string): Observable<ShellyDiscoveryError | ShellyDiscoveryResult> {
-        return from(
-            axios.get<ShellyInfo>(`http://${address}/shelly`, { timeout: 500 }),
-        ).pipe(
+        return from(axios.get<ShellyInfo>(`http://${address}/shelly`, { timeout: 500 })).pipe(
             map(({ data }) => data),
             mergeMap((info) =>
                 from(axios.get<ShellySettings>(`http://${address}/settings`)).pipe(

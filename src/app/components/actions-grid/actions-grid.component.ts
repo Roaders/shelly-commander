@@ -291,11 +291,9 @@ export class ActionsGridComponent implements IActionsGrid {
     }
 
     private updateRows() {
-        this._actionsList = reduceActions(
-            this._actions || {},
-            this.urlTemplate,
-            this.selectedDevice,
-        ).map((expandedRow) => this.createGridRow(expandedRow));
+        this._actionsList = reduceActions(this._actions || {}, this.urlTemplate, this.selectedDevice).map(
+            (expandedRow) => this.createGridRow(expandedRow),
+        );
 
         this.sizeColumns();
     }
