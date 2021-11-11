@@ -25,7 +25,6 @@ export class CheckboxCellRenderer implements ICellRenderer {
 
     public onClick(event: Event) {
         event.preventDefault();
-        console.log(`Clicked`, this._params);
 
         this._owner?.onEnabledClick(this._params?.data);
     }
@@ -35,9 +34,9 @@ export class CheckboxCellRenderer implements ICellRenderer {
     }
 
     public get label() {
-        if (isActionUrlRow(this._params?.data)) {
-            if (this._params?.data.existingUrl != null) {
-                return 'Update';
+        if (this._params != null && isActionUrlRow(this._params?.data)) {
+            if (this._params.data.existingUrl != null) {
+                return this._params.data.existingUrl != this._params.data.updatedUrl ? 'Update' : 'No Change';
             } else {
                 return 'Add';
             }

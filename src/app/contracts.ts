@@ -20,6 +20,8 @@ export type ActionRow = { rowType: 'actionRow'; id: string; name: string; enable
 export type ActionURLRow = {
     rowType: 'actionURLRow';
     id: string;
+    actionName: string;
+    action: ShellyAction;
     updateValue: boolean;
     existingUrl?: string;
     updatedUrl: string;

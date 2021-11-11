@@ -16,7 +16,7 @@ export class ActionsGridComponent {
     private columnApi: ColumnApi | undefined;
 
     private _actions: ShellyActionRecord | undefined;
-    private _edits: Record<string, { enabled: boolean }> = {};
+    private _edits: Record<string, { enabled: boolean; updateUrls: boolean[] }> = {};
 
     constructor(private shellyService: ShellyService) {}
 
@@ -31,19 +31,22 @@ export class ActionsGridComponent {
             },
             {
                 colId: 'enabledColumn',
-                valueGetter: (row): boolean => rowIsEnabled(row.data),
+                valueGetter: (row): boolean | undefined => rowIsEnabled(row.data),
                 cellRendererFramework: CheckboxCellRenderer,
                 cellRendererParams: { owner: this },
             },
             {
                 colId: 'existingUrl',
                 headerName: 'Existing Url',
-                valueGetter: (row): string | undefined => (isActionUrlRow(row.data) ? row.data.existingUrl : undefined),
+                valueGetter: (row): string | undefined =>
+                    isActionUrlRow(row.data) ? row.data.existingUrl ?? 'Undefined' : undefined,
+                flex: 1,
             },
             {
                 colId: 'updatedUrl',
                 headerName: 'Updated Url',
                 valueGetter: (row): string | undefined => (isActionUrlRow(row.data) ? row.data.updatedUrl : undefined),
+                flex: 1,
             },
         ],
         domLayout: 'autoHeight',
@@ -123,14 +126,29 @@ export class ActionsGridComponent {
         this.updateRows();
     }
 
-    public onEnabledClick(data?: ActionRow) {
+    public onEnabledClick(data: unknown) {
         if (data == null) {
             return;
         }
 
-        const actionEdits = (this._edits[data.id] = this._edits[data.id] || { enabled: !data.enabled });
+        if (isActionRow(data)) {
+            const actionEdits = (this._edits[data.id] = this._edits[data.id] || {
+                enabled: !data.enabled,
+                updateUrls: [],
+            });
 
-        actionEdits.enabled = !data.enabled;
+            actionEdits.enabled = !data.enabled;
+        } else if (isActionUrlRow(data)) {
+            const actionId = getActionRowId(data.actionName, data.action);
+            const actionEdits = (this._edits[actionId] = this._edits[actionId] || {
+                enabled: data.action.enabled,
+                updateUrls: [],
+            });
+
+            actionEdits.updateUrls[data.index] = !data.updateValue;
+        } else {
+            throw new Error(`Unknown row type: ${JSON.stringify(data)}`);
+        }
 
         this.updateRows();
         this.updateHasEdits();
@@ -148,11 +166,27 @@ export class ActionsGridComponent {
     }
 
     private updateHasEdits() {
-        this._hasEdits = reduceActions(this._actions || {}).some(({ name, action }) => {
+        this._hasEdits = reduceActions(this._actions || {}).some((row) => {
+            const { name, action } = row;
             const id = getActionRowId(name, action);
             const edits = this._edits[id];
-            return edits != null && edits.enabled != action.enabled;
+
+            if (edits == null) {
+                return false;
+            }
+
+            if (row.type === 'actionRow') {
+                return edits.enabled != action.enabled;
+            } else if (row.type === 'actionURLRow') {
+                return edits.updateUrls[row.index] && (row.url == null || row.url != this.generateUrl(row));
+            }
+
+            return false;
         });
+    }
+
+    private generateUrl(row: ExpandedActionURLRow): string {
+        return `${getUrlActionRowId(row.name, row.action, row.index)}_generatedUrl`;
     }
 
     private sizeColumns() {
@@ -162,26 +196,31 @@ export class ActionsGridComponent {
 
     private createGridRow(expandedRow: ExpandedRow): ActionRow | ActionURLRow {
         const { action, name } = expandedRow;
-        if (expandedRow.type === 'actionRow') {
-            const id = getActionRowId(name, action);
-            const enabled = this._edits[id]?.enabled ?? action.enabled;
+        const actionId = getActionRowId(name, action);
+        const actionEdits = this._edits[actionId];
 
-            return { name, id, enabled, action, rowType: 'actionRow' };
+        if (expandedRow.type === 'actionRow') {
+            const enabled = actionEdits?.enabled ?? action.enabled;
+
+            return { name, id: actionId, enabled, action, rowType: 'actionRow' };
         } else if (expandedRow.type === 'actionURLRow') {
-            const id = getActionRowId(name, action);
-            const updateValue = this._edits[id]?.enabled ?? action.enabled;
+            const id = getUrlActionRowId(name, action, expandedRow.index);
+            const index = expandedRow.index;
+            const updateValue = actionEdits?.updateUrls[index] ?? false;
 
             return {
                 id,
                 updateValue,
                 rowType: 'actionURLRow',
-                index: expandedRow.index,
-                updatedUrl: 'updatedUrl',
+                index,
+                updatedUrl: this.generateUrl(expandedRow),
                 existingUrl: expandedRow.url,
+                actionName: name,
+                action,
             };
         }
 
-        throw new Error(`Unknown row type: ${(expandedRow as any).type}`);
+        throw new Error(`Unknown row type: ${JSON.stringify(expandedRow)}`);
     }
 
     private reset() {
@@ -247,6 +286,16 @@ function getActionRowId(name: string, action: ShellyAction): string {
     return `${name}_${action.index}`;
 }
 
-function rowIsEnabled(row: ActionRow): boolean {
-    return isActionRow(row) ? row.enabled : false;
+function getUrlActionRowId(name: string, action: ShellyAction, index: number): string {
+    return `${getActionRowId(name, action)}_${index}`;
+}
+
+function rowIsEnabled(row: unknown): boolean | undefined {
+    if (isActionRow(row)) {
+        return row.enabled;
+    } else if (isActionUrlRow(row)) {
+        return row.existingUrl == null || row.existingUrl != row.updatedUrl ? row.updateValue : undefined;
+    }
+
+    return undefined;
 }
