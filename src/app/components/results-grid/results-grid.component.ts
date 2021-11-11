@@ -3,7 +3,7 @@ import { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import { interval } from 'rxjs';
 import { mergeMap, take, tap } from 'rxjs/operators';
 import { discoveredDevicesStorageKey } from '../../constants';
-import { DiscoveryMessages, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
+import { DiscoveryMessages, IResultsGrid, ShellyDiscoveryError, ShellyDiscoveryResult } from '../../contracts';
 import { compareAddresses, formatMac } from '../../helpers';
 import { ShellyService } from '../../services';
 import { AddressCellRenderer } from '../cell-renderers/address/address.cell-renderer';
@@ -19,7 +19,7 @@ const defaultColDef: ColDef = {
     templateUrl: './results-grid.component.html',
     styleUrls: ['./results-grid.component.scss'],
 })
-export class ResultsGridComponent {
+export class ResultsGridComponent implements IResultsGrid {
     private _gridApi: GridApi | undefined;
 
     @Output()

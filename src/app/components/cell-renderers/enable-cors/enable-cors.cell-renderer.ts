@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { ICellRenderer, ICellRendererParams } from 'ag-grid-community';
-import { ResultsGridComponent } from '../../results-grid/results-grid.component';
+import { IResultsGrid, IResultsGridRendererParams } from '../../../contracts';
 
 @Component({
     selector: 'enable-cors-cell-renderer',
     templateUrl: './enable-cors.cell-renderer.html',
 })
 export class EnableCorsCellRenderer implements ICellRenderer {
-    private _owner: ResultsGridComponent | undefined;
+    private _owner: IResultsGrid | undefined;
     private _ipAddress: string | undefined;
 
     public get ipAddress(): string | undefined {
@@ -30,8 +30,8 @@ export class EnableCorsCellRenderer implements ICellRenderer {
         return true;
     }
 
-    private saveValues(params: ICellRendererParams): void {
-        this._owner = (params as any).owner;
+    private saveValues(params: IResultsGridRendererParams): void {
+        this._owner = params.owner;
         this._ipAddress = params.value;
     }
 }

@@ -160,8 +160,16 @@ export interface IActionsGrid {
     onEnabledClick: (row: ActionRow | ActionURLRow) => void;
 }
 
+export interface IResultsGrid {
+    enableCors(address: string): void;
+}
+
 export interface IActionsGridCellRendererParams extends ICellRendererParams {
     owner?: IActionsGrid;
+}
+
+export interface IResultsGridRendererParams extends ICellRendererParams {
+    owner?: IResultsGrid;
 }
 
 export type UrlTemplateKeys = 'deviceName' | 'deviceHostName' | 'deviceMac' | 'deviceType' | 'action' | 'index';
