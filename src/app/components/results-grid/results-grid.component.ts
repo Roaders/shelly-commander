@@ -53,6 +53,7 @@ export class ResultsGridComponent {
         rowSelection: 'single',
         onRowSelected: () => this.onRowSelected(),
         onGridReady: (event) => (this._gridApi = event.api),
+        enableCellTextSelection: true,
     };
 
     public possibleGridOptions: GridOptions = {

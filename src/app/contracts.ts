@@ -1,3 +1,5 @@
+import { ICellRendererParams } from 'ag-grid-community';
+
 export type NumericRange =
     | {
           min: number;
@@ -153,3 +155,11 @@ export type ShellySettings = {
     allow_cross_origin: boolean;
     wifirecovery_reboot_enabled: boolean;
 };
+
+export interface IActionsGrid {
+    onEnabledClick: (row: ActionRow | ActionURLRow) => void;
+}
+
+export interface IActionsGridCellRendererParams extends ICellRendererParams {
+    owner?: IActionsGrid;
+}

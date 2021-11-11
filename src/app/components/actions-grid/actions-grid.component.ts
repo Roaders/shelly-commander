@@ -1,24 +1,54 @@
 import { Component, Input } from '@angular/core';
 import { ColumnApi, GridOptions } from 'ag-grid-community';
 import { Subscription } from 'rxjs';
-import { ActionRow, ActionURLRow, ShellyAction, ShellyActionRecord, ShellyDiscoveryResult } from '../../contracts';
+import {
+    ActionRow,
+    ActionURLRow,
+    IActionsGrid,
+    ShellyAction,
+    ShellyActionRecord,
+    ShellyDiscoveryResult,
+} from '../../contracts';
 import { isActionRow, isActionUrlRow } from '../../helpers';
 import { ShellyService } from '../../services';
 import { CheckboxCellRenderer } from '../cell-renderers/checkbox/checkbox.cell-renderer';
+import format from 'string-template';
 
 type MessageType = 'error' | 'message';
+
+type StringTemplateVariables = {
+    deviceName: string;
+    deviceHostName: string;
+    deviceMac: string;
+    deviceType: string;
+    action: string;
+    index: string;
+};
 
 @Component({
     selector: 'actions-grid',
     templateUrl: './actions-grid.component.html',
 })
-export class ActionsGridComponent {
+export class ActionsGridComponent implements IActionsGrid {
     private columnApi: ColumnApi | undefined;
 
     private _actions: ShellyActionRecord | undefined;
     private _edits: Record<string, { enabled: boolean; updateUrls: boolean[] }> = {};
 
     constructor(private shellyService: ShellyService) {}
+
+    private _urlTemplate = 'http://192.168.0.1/api?device={deviceName}&action={action}&index={index}';
+
+    public get urlTemplate(): string {
+        return this._urlTemplate;
+    }
+
+    public set urlTemplate(value: string) {
+        this._urlTemplate = value;
+
+        this.updateRows();
+        this.updateHasEdits();
+    }
 
     public readonly actionGridOptions: GridOptions = {
         columnDefs: [
@@ -40,15 +70,20 @@ export class ActionsGridComponent {
                 headerName: 'Existing Url',
                 valueGetter: (row): string | undefined =>
                     isActionUrlRow(row.data) ? row.data.existingUrl ?? 'Undefined' : undefined,
+                tooltipValueGetter: (row): string => (isActionUrlRow(row.data) ? row.data.existingUrl ?? '' : ''),
                 flex: 1,
+                resizable: true,
             },
             {
                 colId: 'updatedUrl',
                 headerName: 'Updated Url',
                 valueGetter: (row): string | undefined => (isActionUrlRow(row.data) ? row.data.updatedUrl : undefined),
+                tooltipValueGetter: (row): string => (isActionUrlRow(row.data) ? row.data.updatedUrl : ''),
                 flex: 1,
+                resizable: true,
             },
         ],
+        enableCellTextSelection: true,
         domLayout: 'autoHeight',
         onGridReady: (event) => {
             this.columnApi = event.columnApi;
@@ -186,7 +221,22 @@ export class ActionsGridComponent {
     }
 
     private generateUrl(row: ExpandedActionURLRow): string {
-        return `${getUrlActionRowId(row.name, row.action, row.index)}_generatedUrl`;
+        const device = this.selectedDevice;
+
+        if (device == null) {
+            throw new Error(`Attempted to generate url when there was no selected device`);
+        }
+
+        const variables: StringTemplateVariables = {
+            action: encodeURIComponent(row.name),
+            deviceName: encodeURIComponent(device.settings?.name),
+            deviceHostName: encodeURIComponent(device.settings.device.hostname),
+            index: encodeURIComponent(row.action.index.toString()),
+            deviceMac: encodeURIComponent(device.settings.device.mac),
+            deviceType: encodeURIComponent(device.settings.device.type),
+        };
+
+        return format(this._urlTemplate, variables);
     }
 
     private sizeColumns() {

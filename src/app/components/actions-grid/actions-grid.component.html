@@ -1,4 +1,3 @@
-
 <div class="pt-2">
     <div *ngIf="selectedDevice == null">Select a device...</div>
 
@@ -10,11 +9,14 @@
 
         <div *ngIf="actionsList != null">
 
-            <ag-grid-angular 
-                class="ag-theme-alpine w-100" 
-                [rowData]="actionsList" 
-                [gridOptions]="actionGridOptions"
-                >
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Url Template</span>
+                </div>
+                <input type="text" class="form-control" [(ngModel)]="urlTemplate">
+            </div>
+
+            <ag-grid-angular class="ag-theme-alpine w-100 pt-2" [rowData]="actionsList" [gridOptions]="actionGridOptions">
             </ag-grid-angular>
 
             <div class="pt-2 d-flex justify-content-center h-100">

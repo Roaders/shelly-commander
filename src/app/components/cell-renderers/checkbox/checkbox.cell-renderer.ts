@@ -1,24 +1,24 @@
 import { Component } from '@angular/core';
 import { ICellRenderer, ICellRendererParams } from 'ag-grid-community';
+import { IActionsGrid, IActionsGridCellRendererParams } from '../../../contracts';
 import { isActionUrlRow } from '../../../helpers';
-import { ActionsGridComponent } from '../../actions-grid/actions-grid.component';
 
 @Component({
     selector: 'checkbox-cell-renderer',
     templateUrl: './checkbox.cell-renderer.html',
 })
 export class CheckboxCellRenderer implements ICellRenderer {
-    private _owner: ActionsGridComponent | undefined;
+    private _owner: IActionsGrid | undefined;
     private _params: ICellRendererParams | undefined;
 
-    public agInit(params: ICellRendererParams): void {
+    public agInit(params: IActionsGridCellRendererParams): void {
         this._params = params;
-        this._owner = (params as any).owner;
+        this._owner = params.owner;
     }
 
-    public refresh(params: ICellRendererParams): boolean {
+    public refresh(params: IActionsGridCellRendererParams): boolean {
         this._params = params;
-        this._owner = (params as any).owner;
+        this._owner = params.owner;
 
         return true;
     }
