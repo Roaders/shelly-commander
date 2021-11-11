@@ -134,8 +134,12 @@ export class ResultsGridComponent {
 
     private onRowSelected(): void {
         const discoveryResult: ShellyDiscoveryResult | undefined = this._gridApi?.getSelectedRows()[0];
-        this._selectedDevice = discoveryResult;
-        this.onDeviceSelected.emit(discoveryResult);
+        this.selectDevice(discoveryResult);
+    }
+
+    private selectDevice(result: ShellyDiscoveryResult | undefined) {
+        this._selectedDevice = result;
+        this.onDeviceSelected.emit(result);
     }
 
     private handleStreamResult(message: DiscoveryMessages) {
@@ -145,6 +149,7 @@ export class ResultsGridComponent {
                 this._scanStarted = true;
                 this._possibleShellyLookup = undefined;
                 this._shellyLookup = undefined;
+                this.selectDevice(undefined);
                 break;
 
             case 'streamComplete':
