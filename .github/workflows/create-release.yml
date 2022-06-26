@@ -51,4 +51,4 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: roaders/sd-card-copy:latest,roaders/sd-card-copy:${{ steps.release.outputs.release_tag }}
+          tags: roaders/shelly-commander:latest,roaders/shelly-commander:${{ steps.release.outputs.release_tag }}
