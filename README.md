@@ -32,3 +32,11 @@ The following values are supported in the url template:
  * **{index}**
  * **{deviceMac}**
  * **{deviceType}**
+
+ ## Docker
+
+ Host by deploying a docker container:
+
+ ```bash
+ $ docker run -p 80:80 roaders/shelly-commander:latest
+ ```
