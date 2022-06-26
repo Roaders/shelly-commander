@@ -1,0 +1,54 @@
+name: Create Release
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+
+      - name: Install node modules and verify build
+        run: npm ci && npm run build-release
+
+      - name: Release
+        uses: justincy/github-action-npm-release@2.0.2
+        id: release
+
+      - name: Print release output
+        if: ${{ steps.release.outputs.released == 'true' }}
+        run: echo Release ID ${{ steps.release.outputs.release_id }} TAG ${{ steps.release.outputs.release_tag }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        if: ${{ steps.release.outputs.released == 'true' }}
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        if: ${{ steps.release.outputs.released == 'true' }}
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: roaders/sd-card-copy:latest,roaders/sd-card-copy:${{ steps.release.outputs.release_tag }}
